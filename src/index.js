@@ -4,7 +4,7 @@ import {
   RESOLVED_LISTENER_NAME
 } from './util/constants'
 
-Flask._version = '1.0.1'
+Flask._version = '1.0.0'
 Flask._env = 'development'
 
 export default Flask
