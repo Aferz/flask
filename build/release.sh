@@ -19,7 +19,7 @@ then
 
     # Build & Bump
     echo "Bumping main file and building dist files"
-    VERSION=$VERSION npm run pump:main
+    VERSION=$VERSION ENV='production' npm run pump:main
     VERSION=$VERSION ENV='production' npm run build:dev
     VERSION=$VERSION ENV='production' npm run build:min
     VERSION=$VERSION ENV='production' npm run build:umd
@@ -29,7 +29,7 @@ then
     echo "Commiting and bumping package.json ..."
     git add -A
     git commit -m "Build v$VERSION"
-    npm version $VERSION --message "Build v$VERSION"
+    npm version $VERSION --message "Bump package.json v$VERSION"
     echo "Done."
 
     # Publish
