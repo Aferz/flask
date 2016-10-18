@@ -359,3 +359,15 @@ In order to mantain good separation of concerns, Flask can be configured during 
 
 ## Merging different Flask configuration objects
 (WIP)
+
+# Contributing
+
+Consider contributing opening an [issue](https://github.com/Aferz/flask/issues) or opening a [pull request](https://github.com/Aferz/flask/pull).
+
+## License
+
+Flask is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
+
+## Special thanks
+
+To Symfony and its IOC Container, that it obviously inspired me to build this.
