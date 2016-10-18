@@ -11,7 +11,7 @@
     "build:dev": "webpack --config build/webpack.dev.config.js",
     "build:min": "webpack --config build/webpack.min.config.js",
     "build:umd": "webpack --config build/webpack.umd.config.js",
-    "test": "npm run test:unit && npm run karma",
+    "test": "npm run test:unit",
     "test:unit": "mocha --compilers js:babel-core/register test/index.js",
     "test:coverage": "babel-node ./node_modules/.bin/babel-istanbul cover _mocha -- test/index.js",
     "karma": "npm run build:test && karma start ./build/karma.local.conf.js",
