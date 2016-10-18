@@ -1,6 +1,6 @@
 {
   "name": "flask-container",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "author": "Alejandro Fernandez Rueda",
   "main": "./dist/flask.umd.js",
   "description": "IOC Container for Javascript & Node.js",
