@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Aferz/flask.svg?branch=develop)](https://travis-ci.org/Aferz/flask)
+[![Build Status](https://travis-ci.org/Aferz/flask.svg?branch=master)](https://travis-ci.org/Aferz/flask)
 
 # Introduction
 Flask is a tiny yet powerful IOC Container for your projects based on javascript, including nodejs. It resolves dependencies for you automaticly and improves your development flow tyding up your code.
