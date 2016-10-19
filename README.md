@@ -101,7 +101,7 @@ Services are a <i>fancy</i> word to describe super cool reusable objects. That's
 Register a service. Returns new instance on every call:
 
 ```javascript
-  funcion Villain(weapon) {
+  function Villain(weapon) {
     this.weapon = weapon;
   }
 
@@ -116,7 +116,7 @@ Of course, there is only one superman so we'll use a singleton for this case. A 
 
 
 ```javascript
-  funcion Superman(superPower1, superPower2) {
+  function Superman(superPower1, superPower2) {
     this.superPower1 = superPower1;
     this.superPower2 = superPower2;
   }
