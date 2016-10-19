@@ -6,7 +6,7 @@ import {
   serviceNotRegisteredException,
   circularDependencyParameterError,
   circularDependencyServiceError
-} from './res/exceptions'
+} from './util/exceptions'
 
 export default class Resolver {
   constructor(flask) {

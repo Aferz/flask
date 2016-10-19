@@ -273,24 +273,21 @@ This is the proper way to register events and it can be used on two ways:
 
 <b>Note:</b> The listener will be executed in order they were registered.
 
-Harcoding name of the event is a bad practice, thats why Flask offers right out the box useful constants for this purpose:
+Harcoding name of the event is a bad practice, thats why Flask offers right out the box usefull constants for these methods (ES6 modules & node only) located in `flask-container/listeners`. One example:
 
 ```javascript
 // ES6
-import { ON_RESOLVED } from 'flask-container/res/listeners'
+import { RESOLVED_LISTENER_NAME } from 'flask-container/listeners'
 
 // Node
-var onResolved = require('flask-container/res/listeners').ON_RESOLVED
-
-// Browser
-var onResolved = Flask.listeners.ON_RESOLVED
+var onResolved = require('flask-container/listeners').RESOLVED_LISTENER_NAME
 ```
 
 Here is a table to help you with the event system:
 
-Event Name     | Constant               | Fires when ...
-:------------: | :--------------------: | :-----------:
-resolved | ON_RESOLVED | After service/parameter is instantiated. *It'll only affect to requested one, not its dependencies.*
+Name     | Constant               | Fires when ...
+:------: | :--------------------: | :-----------:
+resolved | RESOLVED_LISTENER_NAME | After service/parameter is instantiated. *It'll only affect to requested one, not its dependencies.*
 (WIP) | (WIP) | (WIP) | Before service/parameter is instantiated. *It'll only affect to requested one, not its dependencies.*
 
 ## Config

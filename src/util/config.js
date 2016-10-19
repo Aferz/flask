@@ -1,5 +1,8 @@
 import Reflect from 'harmony-reflect'
-import { PARAMETER_DELIMITER_CHAR, SERVICE_DELIMITER_CHAR } from '../res/config'
+import {
+  PARAMETER_DELIMITER_CHAR,
+  SERVICE_DELIMITER_CHAR
+} from './constants'
 
 export const configureFlask = (configObject, flask) => {
   registerConfigValues(Reflect.get(configObject, 'config') || {}, flask)

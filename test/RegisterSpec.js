@@ -1,6 +1,9 @@
 import Flask from '../src/Flask'
 import { Service, Singleton, Parameter } from '../src/services'
-import { GLOBAL_LISTENER_NAME, ON_RESOLVED } from '../src/res/listeners'
+import {
+  GLOBAL_LISTENER_NAME,
+  RESOLVED_LISTENER_NAME
+} from '../src/util/constants'
 
 describe('Register Configuration Manually', () => {
   it('Set config values manually', () => {
@@ -140,15 +143,15 @@ describe('Register Configuration Manually', () => {
     const func2 = () => {}
     const func3 = () => {}
     const flask = new Flask()
-    flask.listen(ON_RESOLVED, func1)
+    flask.listen(RESOLVED_LISTENER_NAME, func1)
     flask.listen('custom', func2)
     flask.listen('custom', func3)
 
-    assert.property(flask.listeners, ON_RESOLVED)
+    assert.property(flask.listeners, RESOLVED_LISTENER_NAME)
     assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_LISTENER_NAME)
+    assert.property(flask.listeners[RESOLVED_LISTENER_NAME], GLOBAL_LISTENER_NAME)
     assert.property(flask.listeners['custom'], GLOBAL_LISTENER_NAME)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_LISTENER_NAME], [func1])
+    assert.deepEqual(flask.listeners[RESOLVED_LISTENER_NAME][GLOBAL_LISTENER_NAME], [func1])
     assert.deepEqual(flask.listeners['custom'][GLOBAL_LISTENER_NAME], [func2, func3])
   })
 
@@ -159,16 +162,16 @@ describe('Register Configuration Manually', () => {
     const func3 = () => {}
     const flask = new Flask()
     flask.service('aliasA', serviceA)
-    flask.listen(ON_RESOLVED, 'aliasA', func1)
+    flask.listen(RESOLVED_LISTENER_NAME, 'aliasA', func1)
     flask.listen('custom', 'aliasA', func2)
     flask.listen('custom', 'aliasA', func3)
 
     const service = flask.services[0]
-    assert.property(flask.listeners, ON_RESOLVED)
+    assert.property(flask.listeners, RESOLVED_LISTENER_NAME)
     assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], service.alias)
+    assert.property(flask.listeners[RESOLVED_LISTENER_NAME], service.alias)
     assert.property(flask.listeners['custom'], service.alias)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][service.alias], [func1])
+    assert.deepEqual(flask.listeners[RESOLVED_LISTENER_NAME][service.alias], [func1])
     assert.deepEqual(flask.listeners['custom'][service.alias], [func2, func3])
   })
 })

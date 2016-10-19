@@ -1,15 +1,17 @@
 import Flask from '../src/Flask'
 import { Service, Singleton, Parameter } from '../src/services'
-import { GLOBAL_LISTENER_NAME, ON_RESOLVED } from '../src/res/listeners'
-import { PARAMETER_DELIMITER_CHAR, SERVICE_DELIMITER_CHAR } from '../src/res/config'
+import {
+  GLOBAL_LISTENER_NAME,
+  RESOLVED_LISTENER_NAME
+} from '../src/util/constants'
 
 describe('Initial Configuration', () => {
   it('Load default config values if config values not present', () => {
     const flask = new Flask()
     assert.property(flask.config, 'serviceDelimiter')
     assert.property(flask.config, 'paramDelimiter')
-    assert.equal(flask.config.serviceDelimiter, SERVICE_DELIMITER_CHAR)
-    assert.equal(flask.config.paramDelimiter, PARAMETER_DELIMITER_CHAR)
+    assert.equal(flask.config.serviceDelimiter, '@')
+    assert.equal(flask.config.paramDelimiter, '%')
   })
 
   it('Override config values from initial config', () => {
@@ -153,17 +155,17 @@ describe('Initial Configuration', () => {
     const func3 = () => {}
     const config = {
       listeners: {
-        [ON_RESOLVED]: [func1],
+        [RESOLVED_LISTENER_NAME]: [func1],
         custom: [func2, func3]
       }
     }
 
     const flask = new Flask(config)
-    assert.property(flask.listeners, ON_RESOLVED)
+    assert.property(flask.listeners, RESOLVED_LISTENER_NAME)
     assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_LISTENER_NAME)
+    assert.property(flask.listeners[RESOLVED_LISTENER_NAME], GLOBAL_LISTENER_NAME)
     assert.property(flask.listeners['custom'], GLOBAL_LISTENER_NAME)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_LISTENER_NAME], [func1])
+    assert.deepEqual(flask.listeners[RESOLVED_LISTENER_NAME][GLOBAL_LISTENER_NAME], [func1])
     assert.deepEqual(flask.listeners['custom'][GLOBAL_LISTENER_NAME], [func2, func3])
   })
 
@@ -177,7 +179,7 @@ describe('Initial Configuration', () => {
         aliasA: {
           service: serviceA,
           listeners: {
-            [ON_RESOLVED]: [func1],
+            [RESOLVED_LISTENER_NAME]: [func1],
             custom: [func2, func3]
           }
         }
@@ -186,11 +188,11 @@ describe('Initial Configuration', () => {
 
     const flask = new Flask(config)
     const service = flask.services[0]
-    assert.property(flask.listeners, ON_RESOLVED)
+    assert.property(flask.listeners, RESOLVED_LISTENER_NAME)
     assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], service.alias)
+    assert.property(flask.listeners[RESOLVED_LISTENER_NAME], service.alias)
     assert.property(flask.listeners['custom'], service.alias)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][service.alias], [func1])
+    assert.deepEqual(flask.listeners[RESOLVED_LISTENER_NAME][service.alias], [func1])
     assert.deepEqual(flask.listeners['custom'][service.alias], [func2, func3])
   })
 })
