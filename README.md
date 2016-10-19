@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Aferz/flask.svg?branch=develop)](https://travis-ci.org/Aferz/flask)
+[![Build Status](https://travis-ci.org/Aferz/flask.svg?branch=master)](https://travis-ci.org/Aferz/flask)
 
 # Introduction
 Flask is a tiny yet powerful IOC Container for your projects based on javascript, including nodejs. It resolves dependencies for you automaticly and improves your development flow tyding up your code.
@@ -7,30 +7,30 @@ It offers support for <code>services</code>, <code>singletons</code>, <code>para
 
 ## Index
 
-- [Installation](https://github.com/Aferz/flask/new/develop?readme=1#installation)
-- [Parameters](https://github.com/Aferz/flask/new/develop?readme=1#parameters)
-  - [*.parameter(alias, value)*](https://github.com/Aferz/flask/new/develop?readme=1#parameteralias-value)
-  - [*.value(alias)*](https://github.com/Aferz/flask/new/develop?readme=1#valuealias)
-- [Services & Singletons](https://github.com/Aferz/flask/new/develop?readme=1#services--singletons)
-  - [*.service(alias, definition [, args = []])*](https://github.com/Aferz/flask/new/develop?readme=1#servicealias-definition--args--)
-  - [*.singleton(alias, definition [, args = []])*](https://github.com/Aferz/flask/new/develop?readme=1#singletonalias-definition--args--)
-  - [*.make(alias)*](https://github.com/Aferz/flask/new/develop?readme=1#makealias)
-- [Tagging](https://github.com/Aferz/flask/new/develop?readme=1#tagging)
-  - [*.tag(name, aliases)*](https://github.com/Aferz/flask/new/develop?readme=1#tagname-aliases)
-  - [*.tagged(name)*](https://github.com/Aferz/flask/new/develop?readme=1#taggedname)
-- [Decorators](https://github.com/Aferz/flask/new/develop?readme=1#decorators)
-- [Calling & Wrapping](https://github.com/Aferz/flask/new/develop?readme=1#calling--wrapping)
-  - [*.call(definition, dependencies[, context = null])*](https://github.com/Aferz/flask/new/develop?readme=1#calldefinition-dependencies-context--null)
-  - [*.wrap(definition, dependencies[, context = null])*](https://github.com/Aferz/flask/new/develop?readme=1#wrapdefinition-dependencies-context--null)
-- [Eventing](https://github.com/Aferz/flask/new/develop?readme=1#eventing)
-  - [*.listen(event, alias, handler)*](https://github.com/Aferz/flask/new/develop?readme=1#listenevent-alias-handler)
-    - [Globally](https://github.com/Aferz/flask/new/develop?readme=1#globally)
-    - [Service/Parameter Scoped](https://github.com/Aferz/flask/new/develop?readme=1#serviceparameter-scoped)
-- [Config](https://github.com/Aferz/flask/new/develop?readme=1#config)
-  - [*.setConfigValue(key, value)*](https://github.com/Aferz/flask/new/develop?readme=1#setconfigvaluekey-value)
-  - [*.cfg(key)*](https://github.com/Aferz/flask/new/develop?readme=1#cfgkey)
-- [Setting up Flask on bootstrap](https://github.com/Aferz/flask/new/develop?readme=1#setting-up-flask-on-bootstrap)
-- [Merging different Flask configuration objects](https://github.com/Aferz/flask/new/develop?readme=1#merging-different-flask-configuration-objects)
+- [Installation](https://github.com/Aferz/flask#installation)
+- [Parameters](https://github.com/Aferz/flask#parameters)
+  - [*.parameter(alias, value)*](https://github.com/Aferz/flask#parameteralias-value)
+  - [*.value(alias)*](https://github.com/Aferz/flask#valuealias)
+- [Services & Singletons](https://github.com/Aferz/flask#services--singletons)
+  - [*.service(alias, definition [, args = []])*](https://github.com/Aferz/flask#servicealias-definition--args--)
+  - [*.singleton(alias, definition [, args = []])*](https://github.com/Aferz/flask#singletonalias-definition--args--)
+  - [*.make(alias)*](https://github.com/Aferz/flask#makealias)
+- [Tagging](https://github.com/Aferz/flask#tagging)
+  - [*.tag(name, aliases)*](https://github.com/Aferz/flask#tagname-aliases)
+  - [*.tagged(name)*](https://github.com/Aferz/flask#taggedname)
+- [Decorators](https://github.com/Aferz/flask#decorators)
+- [Calling & Wrapping](https://github.com/Aferz/flask#calling--wrapping)
+  - [*.call(definition, dependencies[, context = null])*](https://github.com/Aferz/flask#calldefinition-dependencies-context--null)
+  - [*.wrap(definition, dependencies[, context = null])*](https://github.com/Aferz/flask#wrapdefinition-dependencies-context--null)
+- [Eventing](https://github.com/Aferz/flask#eventing)
+  - [*.listen(event, alias, handler)*](https://github.com/Aferz/flask#listenevent-alias-handler)
+    - [Globally](https://github.com/Aferz/flask#globally)
+    - [Service/Parameter Scoped](https://github.com/Aferz/flask#serviceparameter-scoped)
+- [Config](https://github.com/Aferz/flask#config)
+  - [*.setConfigValue(key, value)*](https://github.com/Aferz/flask#setconfigvaluekey-value)
+  - [*.cfg(key)*](https://github.com/Aferz/flask#cfgkey)
+- [Setting up Flask on bootstrap](https://github.com/Aferz/flask#setting-up-flask-on-bootstrap)
+- [Merging different Flask configuration objects](https://github.com/Aferz/flask#merging-different-flask-configuration-objects)
 
 ## Installation
 
@@ -77,7 +77,7 @@ Returns registered parameter out the container:
   var heroe = flask.value('heroe'); // Superman
 ```
 
-Such impressive, isn't it? Let's step it further. With Flask you can inject parameters by reference just enclosing the value into the symbol <b>%</b><i>(Configurable)</i>:
+Such impressive, isn't it? Let's step it further. With Flask you can inject parameters by reference just enclosing the value between the symbol <b>%</b><i>(Configurable)</i>:
 
 
 ```javascript
@@ -101,7 +101,7 @@ Services are a <i>fancy</i> word to describe super cool reusable objects. That's
 Register a service. Returns new instance on every call:
 
 ```javascript
-  funcion Villain(weapon) {
+  function Villain(weapon) {
     this.weapon = weapon;
   }
 
@@ -116,7 +116,7 @@ Of course, there is only one superman so we'll use a singleton for this case. A 
 
 
 ```javascript
-  funcion Superman(superPower1, superPower2) {
+  function Superman(superPower1, superPower2) {
     this.superPower1 = superPower1;
     this.superPower2 = superPower2;
   }
