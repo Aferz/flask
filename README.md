@@ -77,7 +77,7 @@ Returns registered parameter out the container:
   var heroe = flask.value('heroe'); // Superman
 ```
 
-Such impressive, isn't it? Let's step it further. With Flask you can inject parameters by reference just enclosing the value into the symbol <b>%</b><i>(Configurable)</i>:
+Such impressive, isn't it? Let's step it further. With Flask you can inject parameters by reference just enclosing the value between the symbol <b>%</b><i>(Configurable)</i>:
 
 
 ```javascript
