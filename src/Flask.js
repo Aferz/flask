@@ -1,16 +1,13 @@
 import Resolver from './Resolver'
 import Reflect from 'harmony-reflect'
 import { configureFlask } from './util/config'
-import { Service, Singleton, Parameter } from './services/index'
-import {
-  GLOBAL_LISTENER_NAME,
-  RESOLVED_LISTENER_NAME
-} from './util/constants'
+import { Service, Singleton, Parameter } from './services'
+import { GLOBAL_LISTENER_NAME, ON_RESOLVED } from './res/listeners'
 import {
   tagNotRegisteredException,
   paramAlreadyExistsException,
   serviceAlreadyExistsException
-} from './util/exceptions'
+} from './res/exceptions'
 
 export default class Flask {
   constructor(config = {}) {
@@ -143,8 +140,8 @@ const findListeners = (event, alias, flask) => {
 }
 
 const dispatchResolvedListeners = (alias, instance, flask) => {
-  findGlobalListeners(RESOLVED_LISTENER_NAME, flask)
-    .concat(findListeners(RESOLVED_LISTENER_NAME, alias, flask))
+  findGlobalListeners(ON_RESOLVED, flask)
+    .concat(findListeners(ON_RESOLVED, alias, flask))
     .map(listener => {
       listener(instance, flask)
     })
