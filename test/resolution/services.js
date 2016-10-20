@@ -21,7 +21,7 @@ describe('Services', () => {
     assert.strictEqual(serviceInstance1, serviceInstance2)
   })
 
-  it('Resolve registered service without dependencies', () => {
+  it('Resolve registered service with no dependencies', () => {
     class Service {}
     const flask = new Flask()
     flask.service('Service', Service)
@@ -30,64 +30,61 @@ describe('Services', () => {
   })
 
   it('Resolve registered service with primitive dependencies', () => {
-    class Service {
-      constructor(arg1) {
-        this.arg1 = arg1
-      }
+    function Service (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+      this.arg1 = arg1
+      this.arg2 = arg2
+      this.arg3 = arg3
+      this.arg4 = arg4
+      this.arg5 = arg5
+      this.arg6 = arg6
+      this.arg7 = arg7
     }
+
     const flask = new Flask()
     const testObj = { key: 'value' }
     const testFunc = () => {}
     const testArr = [ 'value1', 'value2' ]
-    flask.service('serviceA', Service, [true])
-    flask.service('serviceB', Service, ['value1'])
-    flask.service('serviceC', Service, [5])
-    flask.service('serviceD', Service, [15.45])
-    flask.service('serviceE', Service, [testArr])
-    flask.service('serviceF', Service, [testObj])
-    flask.service('serviceG', Service, [testFunc])
+    flask.service('serviceA', Service, [true, 'value1', 5, 1.2, testArr, testObj, testFunc])
 
-    assert.deepEqual(flask.make('serviceA').arg1, true)
-    assert.deepEqual(flask.make('serviceB').arg1, 'value1')
-    assert.deepEqual(flask.make('serviceC').arg1, 5)
-    assert.deepEqual(flask.make('serviceD').arg1, 15.45)
-    assert.deepEqual(flask.make('serviceE').arg1, testArr)
-    assert.deepEqual(flask.make('serviceF').arg1, testObj)
-    assert.deepEqual(flask.make('serviceG').arg1, testFunc)
+    const service = flask.make('serviceA');
+    assert.deepEqual(service.arg1, true)
+    assert.deepEqual(service.arg2, 'value1')
+    assert.deepEqual(service.arg3, 5)
+    assert.deepEqual(service.arg4, 1.2)
+    assert.deepEqual(service.arg5, testArr)
+    assert.deepEqual(service.arg6, testObj)
+    assert.deepEqual(service.arg7, testFunc)
   })
 
   it('Resolve registered service with reference to parameter', () => {
-    function Service(arg1, arg2) {
+    function Service(arg1) {
       this.arg1 = arg1
-      this.arg2 = arg2
     }
     const flask = new Flask()
     flask.parameter('key', 'value')
-    flask.service('Service', Service, [true, '%key%'])
+    flask.service('Service', Service, ['%key%'])
 
     const service = flask.make('Service')
-    assert.deepEqual(service.arg1, true)
-    assert.deepEqual(service.arg2, 'value')
+    assert.deepEqual(service.arg1, 'value')
   })
 
   it('Resolve registered service with reference to service', () => {
-    function Service1(arg1, arg2) {
+    function Service1(arg1) {
       this.arg1 = arg1
-      this.arg2 = arg2
     }
     function Service2(arg1) {
       this.arg1 = arg1
     }
     const flask = new Flask()
-    flask.parameter('key', 'value')
-    flask.service('Service1', Service1, [true, '@Service2@'])
-    flask.service('Service2', Service2, ['%key%'])
+    flask.service('Service1', Service1, ['@Service2@'])
+    flask.service('Service2', Service2)
 
     const service1 = flask.make('Service1')
-    const service2 = flask.make('Service2')
-    assert.deepEqual(service1.arg1, true)
-    assert.instanceOf(service1.arg2, Service2)
-    assert.deepEqual(service2.arg1, 'value')
+    assert.instanceOf(service1.arg1, Service2)
+  })
+
+  it('Resolve registered service with reference to tag', () => {
+    assert.equal(true, false);
   })
 
   it('Throws error when resolving unregistered service', () => {

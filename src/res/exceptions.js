@@ -19,3 +19,6 @@ export const circularDependencyParameterError = (alias) => {
 export const circularDependencyServiceError = (alias) => {
   return new Error(`Circular dependency in service '${alias}'`)
 }
+export const circularDependencyTagError = (alias) => {
+  return new Error(`Circular dependency in tag '${alias}'`)
+}

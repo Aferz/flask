@@ -1,5 +1,5 @@
 import Reflect from 'harmony-reflect'
-import { PARAMETER_DELIMITER_CHAR, SERVICE_DELIMITER_CHAR } from '../res/config'
+import { PARAMETER_DELIMITER_CHAR, SERVICE_DELIMITER_CHAR, TAG_DELIMITER_CHAR } from '../res/config'
 
 export const configureFlask = (configObject, flask) => {
   registerConfigValues(Reflect.get(configObject, 'config') || {}, flask)
@@ -25,6 +25,7 @@ const registerConfigValues = (config, flask) => {
 const registerDefaultConfigValue = (flask) => {
   flask.setConfigValue('serviceDelimiter', flask.config.serviceDelimiter || SERVICE_DELIMITER_CHAR)
   flask.setConfigValue('paramDelimiter', flask.config.paramDelimiter || PARAMETER_DELIMITER_CHAR)
+  flask.setConfigValue('tagDelimiter', flask.config.tagDelimiter || TAG_DELIMITER_CHAR)
 }
 
 const registerParameters = (parameters, flask) => {
