@@ -84,7 +84,16 @@ describe('Services', () => {
   })
 
   it('Resolve registered service with reference to tag', () => {
-    assert.equal(true, false);
+    function Service (arg1) {
+      this.arg1 = arg1
+    }
+    const flask = new Flask()
+    flask.tag('tag1', ['String1', 'String2'])
+    flask.service('Service', Service, ['#tag1#'])
+
+    const service = flask.make('Service')
+    assert.strictEqual(service.arg1[0], 'String1')
+    assert.strictEqual(service.arg1[1], 'String2')
   })
 
   it('Throws error when resolving unregistered service', () => {

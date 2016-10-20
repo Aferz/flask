@@ -41,7 +41,18 @@ describe('Tags', () => {
   })
 
   it('Resolves registered tag with reference to tag', () => {
-    assert.equal(true, false)
+    const flask = new Flask()
+    function Service () {}
+    flask.service('Service', Service)
+    flask.tag('tag1', ['@Service@', 'String1'])
+    flask.tag('tag2', ['String2', 'String3'])
+    flask.tag('tag3', ['#tag1#', '#tag2#'])
+
+    const tag = flask.tagged('tag3')
+    assert.instanceOf(tag[0][0], Service)
+    assert.strictEqual(tag[0][1], 'String1')
+    assert.strictEqual(tag[1][0], 'String2')
+    assert.strictEqual(tag[1][1], 'String3')
   })
 
   it('Throws exception when resolving unregistered tag', () => {
@@ -51,6 +62,11 @@ describe('Tags', () => {
   })
 
   it('Throws exception when resolving circular dependency', () => {
-    assert.equal(true, false)
+    const flask = new Flask()
+    flask.tag('tag1', ['#tag2#'])
+    flask.tag('tag2', ['#tag1#'])
+
+    assert.throws(() => flask.tagged('tag1'), Error, "Circular dependency in tag 'tag1'")
+    assert.throws(() => flask.tagged('tag2'), Error, "Circular dependency in tag 'tag2'")
   })
 })

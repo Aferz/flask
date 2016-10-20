@@ -88,13 +88,10 @@ export default class Flask {
     return service
   }
 
-  tagged(name) {
-    const dependencies = findTag(name, this)
-    if (!dependencies) {
-      throw tagNotRegisteredException(name)
-    }
-
-    return resolveDependencies(dependencies, this)
+  tagged(alias) {
+    const tag = new Resolver(this).resolveTag(alias)
+    // dispatchResolvedListeners(alias, service, this)
+    return tag
   }
 
   call(definition, dependencies, context = null) {
