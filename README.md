@@ -77,7 +77,7 @@ Returns registered parameter out the container:
   var heroe = flask.value('heroe'); // Superman
 ```
 
-Such impressive, isn't it? Let's step it further. With Flask you can inject parameters by reference just enclosing the value between the symbol <b>%</b><i>(Configurable)</i>:
+Such impressive, isn't it? Let's step it further. With Flask you can inject parameters by reference just enclosing the name of one registered parameter between the symbol <b>%</b>:
 
 
 ```javascript
@@ -141,7 +141,7 @@ It's time to create some Villains and Heroes
   console.log(superman1 === superman2) // true, I promise
 ```
 
-Flask can resolve any dependency either strings, booleans, objects, functions, numbers ... even <b>services and parameters</b> using special symbols. The special symbol for services is <b>@</b><i>(Configurable)</i>:
+Flask can resolve any dependency either strings, booleans, objects, functions, numbers ... even services using <b>@</b>, parameters using <b>%</b> and tags using <b>#</b>:
 
 
 ```javascript
@@ -167,13 +167,13 @@ Flask can resolve any dependency either strings, booleans, objects, functions, n
   console.log(superman.Batman.superPower); // Rich
 ```
 
-This function support infinite (Oh boy) nested dependencies.
+This function support infinite nested dependencies. (Not really, javascript will crash when it reach the maximum call stack size.)
 
 <b>Note:</b> Don't try to inject a service into a parameter with '@' syntax, it just won't work and it'll return the string. That's not the purpose of parameters.
 
 ## Tagging
 
-Tagging it's the way Flask offers to classify and resolve multiple primitive types and services and/or parameters at once.
+Tagging it's the way Flask offers to classify and resolve multiple primitive types, services, parameters or even tags at once.
 
 ### .tag(name, aliases)
 
@@ -203,8 +203,21 @@ With this method we'll retrieve the registered tag out the container:
   console.log(justiceLeague[3]); // 'Ocean'
 ```
 
-(Resolving tag references WIP)
+Of course, Flask offers support for resolving tags by reference:
 
+```javascript
+  flask.tag('JusticeLeague', ['Superman', 'WonderWoman']);
+  flask.tag('Avengers', ['IronMan', 'CaptainAmerica']);
+  flask.tag('Superheroes', ['#JusticeLeague#', '#Avengers#']);
+  
+  var superHeroes = flask.tagged('Superheroes');
+  console.log(justiceLeague[0][0]); // Superman
+  console.log(justiceLeague[0][1]); // WonderWoman
+  console.log(justiceLeague[1][0]); // IronMan
+  console.log(justiceLeague[2][1]); // CaptainAmerica
+```
+
+<b>Note:</b> Don't try to inject a tag into a parameter with '#' syntax, it just won't work and it'll return the string. That's not the purpose of parameters.
 
 ## Decorators
 (WIP)

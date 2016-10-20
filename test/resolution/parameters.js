@@ -54,7 +54,13 @@ describe('Parameters', () => {
   })
 
   it('Parameter must not resolve tags', () => {
-    assert.equal(true, false);
+    const flask = new Flask()
+    flask.service('Service1', () => {})
+    flask.service('Service2', () => {})
+    flask.tag('tag', ['@Service1@', '@Service2@'])
+    flask.parameter('key', '#tag#')
+
+    assert.equal(flask.value('key'), '#tag#')
   })
 
   it('Throws error when resolving unregistered parameter', () => {
