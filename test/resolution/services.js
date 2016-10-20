@@ -1,69 +1,6 @@
-import Flask from '../src/Flask'
-import { Service, Singleton, Parameter } from '../src/services'
+import Flask from '../../src/Flask'
 
-describe('Resolving Config', () => {
-  it('Set config value', () => {
-    const flask = new Flask()
-    flask.setConfigValue('key', 'value')
-
-    assert.equal(flask.config['key'], 'value')
-  })
-
-  it('Get config value', () => {
-    const flask = new Flask()
-    flask.setConfigValue('key', 'value')
-
-    assert.equal(flask.cfg('key'), 'value')
-  })
-
-  it('Get config value of unregistered value returns null', () => {
-    const flask = new Flask()
-
-    assert.equal(flask.cfg('key'), null)
-  })
-})
-
-describe('Resolving Parameters', () => {
-  it('Resolve registered parameter', () => {
-    const flask = new Flask()
-    flask.parameter('key', 'value')
-
-    assert.equal(flask.value('key'), 'value')
-  })
-
-  it('Resolve registered parameter that depends on other parameter', () => {
-    const flask = new Flask()
-    flask.parameter('key', '%key2%')
-    flask.parameter('key2', '%key3%')
-    flask.parameter('key3', 'value')
-
-    assert.equal(flask.value('key'), 'value')
-  })
-
-  it('Throws error when resolving unregistered parameter', () => {
-    const flask = new Flask()
-
-    assert.throws(() => flask.value('key'), "Parameter 'key' not registered in flask")
-  })
-
-  it('Throw exception when resolving circular dependency', () => {
-    const flask = new Flask()
-    flask.parameter('key', '%key2%')
-    flask.parameter('key2', '%key%')
-
-    assert.throws(() => flask.value('key'), Error, "Circular dependency in parameter 'key'")
-  })
-
-  it('Parameter must not resolve services', () => {
-    const flask = new Flask()
-    flask.service('Service1', () => {})
-    flask.parameter('key', '@key2@')
-
-    assert.equal(flask.value('key'), '@key2@')
-  })
-})
-
-describe('Resolving Services', () => {
+describe('Services', () => {
   it('Service must return new instance on every make call', () => {
     class Service {}
     const flask = new Flask()
@@ -159,32 +96,6 @@ describe('Resolving Services', () => {
     assert.throws(() => flask.make('service'), "Service 'service' not registered in flask")
   })
 
-  it('Resolves tagged service', () => {
-    function Service() {}
-    const flask = new Flask()
-    const customObj = { key: 'value' }
-    const customFunc = () => {}
-    flask.service('Service', Service)
-    flask.parameter('Param', 'Value1')
-    flask.tag('multiple', ['@Service@', '%Param%', true, 'string', 1, 1.2, customObj, customFunc])
-    
-    const tagged = flask.tagged('multiple');
-    assert.instanceOf(tagged[0], Service)
-    assert.strictEqual(tagged[1], 'Value1')
-    assert.strictEqual(tagged[2], true)
-    assert.strictEqual(tagged[3], 'string')
-    assert.strictEqual(tagged[4], 1)
-    assert.strictEqual(tagged[5], 1.2)
-    assert.strictEqual(tagged[6], customObj)
-    assert.strictEqual(tagged[7], customFunc)
-  })
-
-  it('Throws exception when resolving unregistered tag', () => {
-    const flask = new Flask()
-
-    assert.throws(() => flask.tagged('tag1'), "Tag 'tag1' not registered in flask")
-  })
-
   it('Throws exception when resolving circular dependency', () => {
     function Service1() {}
     function Service2() {}
@@ -242,30 +153,5 @@ describe('Resolving Services', () => {
     }
     const wrappedFunc = flask.wrap(func1, ['%key%', '@serviceA@'], customContext)()
     const wrappedFunc2 = flask.wrap(func2, [])()
-  })
-
-  it('Dispatch global listeners', () => {
-    class ServiceA{}
-    const flask = new Flask()
-    flask.service('serviceA', ServiceA)
-    flask.listen('resolved', (serviceInstance, containterInstance) => {
-      assert.instanceOf(serviceInstance, ServiceA)
-      assert.strictEqual(flask, containterInstance)
-    })
-
-    flask.make('serviceA')
-  })
-
-  it('Dispatch alias listeners', () => {
-    class ServiceA{}
-    const flask = new Flask()
-    flask.service('serviceA', ServiceA)
-    flask.service('serviceB', ServiceA)
-    flask.listen('resolved', 'serviceA', (serviceInstance, containterInstance) => {
-      assert.instanceOf(serviceInstance, ServiceA)
-      assert.strictEqual(flask, containterInstance)
-    })
-
-    flask.make('serviceA')
   })
 })

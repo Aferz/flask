@@ -16,16 +16,15 @@ export const configureFlask = (configObject, flask) => {
 }
 
 const registerConfigValues = (config, flask) => {
-  flask.setConfigValue(
-    'serviceDelimiter', Reflect.has(config, 'serviceDelimiter')
-      ? config['serviceDelimiter']
-      : SERVICE_DELIMITER_CHAR
-  )
-  flask.setConfigValue(
-    'paramDelimiter', Reflect.has(config, 'paramDelimiter')
-      ? config['paramDelimiter']
-      : PARAMETER_DELIMITER_CHAR
-  )
+  for (let key in config) {
+    flask.setConfigValue(key, config[key])
+  }
+  registerDefaultConfigValue(flask)
+}
+
+const registerDefaultConfigValue = (flask) => {
+  flask.setConfigValue('serviceDelimiter', flask.config.serviceDelimiter || SERVICE_DELIMITER_CHAR)
+  flask.setConfigValue('paramDelimiter', flask.config.paramDelimiter || PARAMETER_DELIMITER_CHAR)
 }
 
 const registerParameters = (parameters, flask) => {

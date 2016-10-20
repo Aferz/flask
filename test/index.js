@@ -7,6 +7,5 @@ var window = {}
 window.assert = assert
 global.assert = assert
 
-import './InitializationSpec'
-import './RegisterSpec'
-import './ResolveSpec'
+import './configuration'
+import './resolution'
