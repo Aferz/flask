@@ -1,0 +1,8 @@
+{
+  "extends": "standard",
+  "parser": "babel-eslint",
+  "rules": {
+    "space-before-function-paren": 0,
+    "no-return-assign": 0
+  }
+}
