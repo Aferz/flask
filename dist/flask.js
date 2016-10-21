@@ -1,5 +1,5 @@
 /*!
- * Flask.js v1.1.0
+ * Flask.js v1.1.1
  * (c) 2016 Alejandro Fernandez
  * Released under the MIT License.
  */
@@ -74,7 +74,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	_Flask2.default._version = '1.1.0';
+	_Flask2.default._version = '1.1.1';
 	_Flask2.default._env = 'development';
 
 	_Flask2.default.listeners = listeners;
