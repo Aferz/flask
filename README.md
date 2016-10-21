@@ -214,7 +214,7 @@ Of course, Flask offers support for resolving tags by reference:
   console.log(justiceLeague[0][0]); // Superman
   console.log(justiceLeague[0][1]); // WonderWoman
   console.log(justiceLeague[1][0]); // IronMan
-  console.log(justiceLeague[2][1]); // CaptainAmerica
+  console.log(justiceLeague[1][1]); // CaptainAmerica
 ```
 
 <b>Note:</b> Don't try to inject a tag into a parameter with '#' syntax, it just won't work and it'll return the string. That's not the purpose of parameters.
