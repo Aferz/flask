@@ -1,9 +1,11 @@
 import Resolver from './Resolver'
 import Reflect from 'harmony-reflect'
 import { configureFlask } from './util/config'
+import DecoratorResolver from './core/DecoratorResolver'
 import { Service, Singleton, Parameter } from './services'
-import { GLOBAL_LISTENER_NAME, ON_RESOLVED } from './res/listeners'
+import { GLOBAL_NAMESPACE, ON_RESOLVED } from './res/listeners'
 import {
+  tagNotRegisteredException,
   paramAlreadyExistsException,
   serviceAlreadyExistsException
 } from './res/exceptions'
@@ -15,6 +17,7 @@ export default class Flask {
     this.services = []
     this.tags = {}
     this.listeners = {}
+    this.decoratorResolver = new DecoratorResolver(this)
 
     configureFlask(config, this)
   }
@@ -57,10 +60,14 @@ export default class Flask {
     this.tags[name] = (this.tags[name] || []).concat(alias)
   }
 
+  decorate(alias, definition) {
+    this.decoratorResolver.add(alias, definition)
+  }
+
   listen(event, alias, handler) {
     if (typeof alias === 'function') {
       handler = alias
-      alias = GLOBAL_LISTENER_NAME
+      alias = GLOBAL_NAMESPACE
     }
     if (!Reflect.has(this.listeners, event)) {
       this.listeners[event] = {}
@@ -77,20 +84,20 @@ export default class Flask {
 
   value(alias) {
     const value = new Resolver(this).resolveParameter(alias)
-    dispatchResolvedListeners(alias, value, this)
-    return value
+    const decoratedValue = this.decoratorResolver.apply(alias, value)
+    dispatchListeners(alias, decoratedValue, this)
+    return decoratedValue
   }
 
   make(alias) {
-    const service = new Resolver(this).resolveService(alias)
-    dispatchResolvedListeners(alias, service, this)
+    let service = new Resolver(this).resolveService(alias)
+    service = this.decoratorResolver.apply(alias, service)
+    dispatchListeners(alias, service, this)
     return service
   }
 
-  tagged(alias) {
-    const tag = new Resolver(this).resolveTag(alias)
-    // dispatchResolvedListeners(alias, service, this)
-    return tag
+  tagged(name) {
+    return new Resolver(this).resolveTag(name)
   }
 
   call(definition, dependencies, context = null) {
@@ -98,7 +105,11 @@ export default class Flask {
   }
 
   wrap(definition, dependencies, context = null) {
-    return definition.bind(context, ...resolveDependencies(dependencies, this))
+    const resolver = new Resolver(this)
+    const resolvedDeps = dependencies.map(dependency => {
+      return resolver.resolveServiceDependencies(dependency, null)
+    })
+    return definition.bind(context, ...resolvedDeps)
   }
 }
 
@@ -114,20 +125,6 @@ export const findTag = (name, flask) => {
   return Reflect.get(flask.tags, name) || null
 }
 
-const resolveDependencies = (dependencies, flask) => {
-  const resolver = new Resolver(flask)
-  return dependencies.map(dependency => {
-    return resolver.resolveServiceDependencies(dependency)
-  })
-}
-
-const findGlobalListeners = (event, flask) => {
-  if (Reflect.has(flask.listeners, event)) {
-    return Reflect.get(flask.listeners[event], GLOBAL_LISTENER_NAME) || []
-  }
-  return []
-}
-
 const findListeners = (event, alias, flask) => {
   if (Reflect.has(flask.listeners, event)) {
     return Reflect.get(flask.listeners[event], alias) || []
@@ -135,8 +132,8 @@ const findListeners = (event, alias, flask) => {
   return []
 }
 
-const dispatchResolvedListeners = (alias, instance, flask) => {
-  findGlobalListeners(ON_RESOLVED, flask)
+const dispatchListeners = (alias, instance, flask) => {
+  findListeners(ON_RESOLVED, GLOBAL_NAMESPACE, flask)
     .concat(findListeners(ON_RESOLVED, alias, flask))
     .map(listener => {
       listener(instance, flask)

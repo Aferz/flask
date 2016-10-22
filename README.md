@@ -220,7 +220,29 @@ Of course, Flask offers support for resolving tags by reference:
 <b>Note:</b> Don't try to inject a tag into a parameter with '#' syntax, it just won't work and it'll return the string. That's not the purpose of parameters.
 
 ## Decorators
-(WIP)
+
+Flask offers functionality for decorate your services/singletons and parameters. A decorator it's a design pattern that allows you to modify an object without touch its original source.
+
+### .decorate(alias, definition)
+
+This is the proper way to register decorators and it can be used on two ways:
+
+#### Applied globally
+```javascript
+  flask.decorate(function (instance, flask) {
+    // this will be executed before instance is returned for EVERY service/parameter resolved
+  });
+```
+
+#### Applied for service or parameter
+```javascript
+  flask.decorate('ServiceA', function (instance, flask) {
+    // this will be executed before instance is returned ONLY for ServiceA
+  });
+```
+
+<b>Note:</b> The listener will be executed in order they were registered.
+
 
 ## Calling & Wrapping
 
@@ -270,14 +292,14 @@ Wouldn't be nice if you could listen events emitted by Flask? Well, i have good 
 
 This is the proper way to register events and it can be used on two ways:
 
-#### Globally
+#### Applied globally
 ```javascript
   flask.listen('eventName', function (instance, flask) {
-    // this will be executed before for EVERY service/parameter resolved
+    // this will be executed before instance is returned for EVERY service/parameter resolved
   });
 ```
 
-#### Service/Parameter Scoped
+#### Applied for service or parameter
 ```javascript
   flask.listen('eventName', 'ServiceA', function (instance, flask) {
     // this will be executed before instance is returned ONLY for ServiceA
@@ -341,6 +363,9 @@ In order to mantain good separation of concerns, Flask can be configured during 
   function serviceC () {}
   function aliasCListener () {}
   function globalListener () {}
+  function param3Decorator () {}
+  function aliasADecorator () {}
+  function globalDecorator () {}
 
   var config = {
     config: {
@@ -349,13 +374,18 @@ In order to mantain good separation of concerns, Flask can be configured during 
     },
     parameters: {
       param1: 'Parameter 1',
-      param2: '%param1%'
+      param2: '%param1%',
+      param3: {
+        value: 'Parameter 3',
+        decorators: [param3Decorator]
+      }
     },
     services: {
       aliasA: {
         service: serviceA,
         arguments: ['@aliasB@'],
-        tags: 'tag1'
+        tags: 'tag1',
+        decorators: [aliasADecorator]
       },
       aliasB: {
         service: serviceB,
@@ -371,7 +401,8 @@ In order to mantain good separation of concerns, Flask can be configured during 
     },
     listeners: {
       resolved: [globalListener]
-    }
+    },
+    decorators: [globalDecorator]
   }
 ```
 

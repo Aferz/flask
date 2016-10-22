@@ -21,6 +21,22 @@ describe('Parameters', () => {
     assert.equal(param2.value, 'Parameter 2')
   })
 
+  it('Set parameter from instantiation being an object', () => {
+    const config = {
+      parameters: {
+        param1: {
+          value: 'Parameter 1'
+        }
+      }
+    }
+
+    const flask = new Flask(config)
+    const param1 = flask.parameters[0]
+    assert.instanceOf(param1, Parameter)
+    assert.equal(param1.alias, 'param1')
+    assert.equal(param1.value, 'Parameter 1')
+  });
+
   it('Set parameter manually', () => {
     const flask = new Flask()
     flask.parameter('param1', 'value1')

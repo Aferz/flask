@@ -1,5 +1,5 @@
 import Flask from '../../src/Flask'
-import { GLOBAL_LISTENER_NAME, ON_RESOLVED } from '../../src/res/listeners'
+import { GLOBAL_NAMESPACE, ON_RESOLVED } from '../../src/res/listeners'
 
 describe('Listeners', () => {
   it('Set global listener from instantiation', () => {
@@ -16,10 +16,10 @@ describe('Listeners', () => {
     const flask = new Flask(config)
     assert.property(flask.listeners, ON_RESOLVED)
     assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_LISTENER_NAME)
-    assert.property(flask.listeners['custom'], GLOBAL_LISTENER_NAME)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_LISTENER_NAME], [func1])
-    assert.deepEqual(flask.listeners['custom'][GLOBAL_LISTENER_NAME], [func2, func3])
+    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_NAMESPACE)
+    assert.property(flask.listeners['custom'], GLOBAL_NAMESPACE)
+    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1])
+    assert.deepEqual(flask.listeners['custom'][GLOBAL_NAMESPACE], [func2, func3])
   })
 
   it('Set service listener from instantiation', () => {
@@ -60,10 +60,10 @@ describe('Listeners', () => {
 
     assert.property(flask.listeners, ON_RESOLVED)
     assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_LISTENER_NAME)
-    assert.property(flask.listeners['custom'], GLOBAL_LISTENER_NAME)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_LISTENER_NAME], [func1])
-    assert.deepEqual(flask.listeners['custom'][GLOBAL_LISTENER_NAME], [func2, func3])
+    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_NAMESPACE)
+    assert.property(flask.listeners['custom'], GLOBAL_NAMESPACE)
+    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1])
+    assert.deepEqual(flask.listeners['custom'][GLOBAL_NAMESPACE], [func2, func3])
   })
 
   it('Set service listener manually', () => {

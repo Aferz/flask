@@ -3,5 +3,6 @@ describe('Container resolution', () => {
   require('./parameters')
   require('./services')
   require('./tags')
+  require('./decorators')
   require('./listeners')
 })

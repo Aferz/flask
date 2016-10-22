@@ -3,5 +3,6 @@ describe('Container configuration', () => {
   require('./parameters')
   require('./services')
   require('./tags')
+  require('./decorators')
   require('./listeners')
 })

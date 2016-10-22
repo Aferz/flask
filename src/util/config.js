@@ -1,4 +1,5 @@
 import Reflect from 'harmony-reflect'
+import { GLOBAL_NAMESPACE } from '../res/listeners'
 import { PARAMETER_DELIMITER_CHAR, SERVICE_DELIMITER_CHAR, TAG_DELIMITER_CHAR } from '../res/config'
 
 export const configureFlask = (configObject, flask) => {
@@ -9,6 +10,9 @@ export const configureFlask = (configObject, flask) => {
   }
   if (Reflect.has(configObject, 'services')) {
     registerServices(configObject.services, flask)
+  }
+  if (Reflect.has(configObject, 'decorators')) {
+    registerDecorators(GLOBAL_NAMESPACE, configObject.decorators, flask)
   }
   if (Reflect.has(configObject, 'listeners')) {
     registerGlobalListeners(configObject.listeners, flask)
@@ -30,7 +34,13 @@ const registerDefaultConfigValue = (flask) => {
 
 const registerParameters = (parameters, flask) => {
   for (let param in parameters) {
-    flask.parameter(param, parameters[param])
+    const isObj = typeof parameters[param] === 'object'
+    const value = isObj ? parameters[param].value : parameters[param]
+    const decorators = isObj ? Reflect.get(parameters[param], 'decorators') || [] : []
+
+    flask.parameter(param, value)
+    
+    registerDecorators(param, decorators, flask)
   }
 }
 
@@ -39,6 +49,7 @@ const registerServices = (services, flask) => {
     const service = Reflect.get(services[alias], 'service')
     const args = Reflect.get(services[alias], 'arguments') || []
     const tags = Reflect.get(services[alias], 'tags') || []
+    const decorators = Reflect.get(services[alias], 'decorators') || []
     const listeners = Reflect.get(services[alias], 'listeners') || {}
     const isSingleton = Reflect.get(services[alias], 'singleton') || false
 
@@ -47,6 +58,7 @@ const registerServices = (services, flask) => {
     : flask.service(alias, service, args)
 
     registerTags(alias, tags, flask)
+    registerDecorators(alias, decorators, flask)
     registerServiceListeners(alias, listeners, flask)
   }
 }
@@ -57,6 +69,15 @@ const registerTags = (alias, tags, flask) => {
   }
   for (let tag in tags) {
     flask.tag(tags[tag], alias)
+  }
+}
+
+const registerDecorators = (alias, decorators, flask) => {
+  if (!Array.isArray(decorators)) {
+    decorators = decorators
+  }
+  for (let decorator in decorators) {
+    flask.decorate(alias, decorators[decorator])
   }
 }
 
