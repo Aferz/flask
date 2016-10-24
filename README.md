@@ -19,6 +19,7 @@ It offers support for <code>services</code>, <code>singletons</code>, <code>para
   - [*.tag(name, aliases)*](https://github.com/Aferz/flask#tagname-aliases)
   - [*.tagged(name)*](https://github.com/Aferz/flask#taggedname)
 - [Decorators](https://github.com/Aferz/flask#decorators)
+  - [*.decorate(alias, definition)*](https://github.com/Aferz/flask/tree/develop#decoratealias-definition)
 - [Calling & Wrapping](https://github.com/Aferz/flask#calling--wrapping)
   - [*.call(definition, dependencies[, context = null])*](https://github.com/Aferz/flask#calldefinition-dependencies-context--null)
   - [*.wrap(definition, dependencies[, context = null])*](https://github.com/Aferz/flask#wrapdefinition-dependencies-context--null)
@@ -374,7 +375,10 @@ In order to mantain good separation of concerns, Flask can be configured during 
     },
     parameters: {
       param1: 'Parameter 1',
-      param2: '%param1%',
+      param2: {
+        value: '%param1%',
+        tags: ['tag1']
+      },
       param3: {
         value: 'Parameter 3',
         decorators: [param3Decorator]

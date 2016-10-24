@@ -45,6 +45,22 @@ describe('Decorators', () => {
     assert.deepEqual(flask.decoratorResolver.decorators['alias'][0], func1)
   })
 
+  it('Set service decorator as string converts it into an array from instantiation', () => {
+    const func1 = () => {}
+    const Service = () => {}
+    const config = {
+      services: {
+        alias: {
+          definition: Service,
+          decorators: func1
+        }
+      }
+    }
+
+    const flask = new Flask(config)
+    assert.deepEqual(flask.decoratorResolver.decorators['alias'], [func1])
+  })
+
   it('Set global decorator manually', () => {
     const func1 = () => {}
     const func2 = () => {}

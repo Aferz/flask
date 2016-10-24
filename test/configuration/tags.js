@@ -1,7 +1,7 @@
 import Flask from '../../src/Flask'
 
 describe('Tags', () => {
-  it('Set tag from instantiation', () => {
+  it('Set service tag from instantiation', () => {
     class serviceA {}
     class serviceB {}
     const config = {
@@ -26,7 +26,25 @@ describe('Tags', () => {
     assert.deepEqual(flask.tags.tag2, ['aliasB'])
   })
 
-  it('Set tag manually', () => {
+  it('Set parameter tag from instantiation', () => {
+    class serviceA {}
+    class serviceB {}
+    const config = {
+      parameters: {
+        param1: {
+          value: 'Value1',
+          tags: ['tag1']
+        }
+      }
+    }
+
+    const flask = new Flask(config)
+    const param1 = flask.parameters[0]
+    assert.property(flask.tags, 'tag1')
+    assert.deepEqual(flask.tags.tag1, ['param1'])
+  })
+
+  it('Set service tag manually', () => {
     class serviceA {}
     class serviceB {}
     const flask = new Flask()

@@ -1,6 +1,6 @@
 import Resolver from './Resolver'
 import Reflect from 'harmony-reflect'
-import { configureFlask } from './util/config'
+import Configurator from './core/Configurator'
 import DecoratorResolver from './core/DecoratorResolver'
 import { Service, Singleton, Parameter } from './services'
 import { GLOBAL_NAMESPACE, ON_RESOLVED } from './res/listeners'
@@ -18,8 +18,9 @@ export default class Flask {
     this.tags = {}
     this.listeners = {}
     this.decoratorResolver = new DecoratorResolver(this)
+    this.configResolver = new Configurator(this)
 
-    configureFlask(config, this)
+    this.configResolver.configure(config)
   }
 
   setConfigValue(key, value) {

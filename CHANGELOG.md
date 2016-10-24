@@ -3,6 +3,9 @@
   - Decorator functionality added (#8)
   - Parameter section, in configuration object, now accepts objects to better customization of parameters at configuration level.
 
+### Changed
+  - Refactorized Configurator. Moved to its own class. (#14)
+
 ## [1.1.1] - 2016-10-21
 ### Added
   - Tags can be resolved by referece in services and tags arguments, enclosing the tag name in '#' symbol.
