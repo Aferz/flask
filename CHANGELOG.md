@@ -1,4 +1,6 @@
 ## [Unreleased]
+
+## [1.2.0] - 2016-10-24
 ### Added
   - Decorator functionality added (#8)
   - Parameter section, in configuration object, now accepts objects to better customization of parameters at configuration level.

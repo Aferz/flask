@@ -1,5 +1,5 @@
 /*!
- * Flask.js v1.1.1
+ * Flask.js v1.2.0
  * (c) 2016 Alejandro Fernandez
  * Released under the MIT License.
  */
@@ -66,7 +66,7 @@
 
 	var _Flask2 = _interopRequireDefault(_Flask);
 
-	var _listeners = __webpack_require__(13);
+	var _listeners = __webpack_require__(8);
 
 	var listeners = _interopRequireWildcard(_listeners);
 
@@ -74,7 +74,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	_Flask2.default._version = '1.1.1';
+	_Flask2.default._version = '1.2.0';
 	_Flask2.default._env = 'development';
 
 	_Flask2.default.listeners = listeners;
@@ -102,11 +102,17 @@
 
 	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
 
-	var _config = __webpack_require__(7);
+	var _Configurator = __webpack_require__(7);
 
-	var _services = __webpack_require__(9);
+	var _Configurator2 = _interopRequireDefault(_Configurator);
 
-	var _listeners = __webpack_require__(13);
+	var _DecoratorResolver = __webpack_require__(9);
+
+	var _DecoratorResolver2 = _interopRequireDefault(_DecoratorResolver);
+
+	var _services = __webpack_require__(11);
+
+	var _listeners = __webpack_require__(8);
 
 	var _exceptions = __webpack_require__(6);
 
@@ -127,8 +133,10 @@
 	    this.services = [];
 	    this.tags = {};
 	    this.listeners = {};
+	    this.decoratorResolver = new _DecoratorResolver2.default(this);
+	    this.configResolver = new _Configurator2.default(this);
 
-	    (0, _config.configureFlask)(config, this);
+	    this.configResolver.configure(config);
 	  }
 
 	  _createClass(Flask, [{
@@ -179,11 +187,16 @@
 	      this.tags[name] = (this.tags[name] || []).concat(alias);
 	    }
 	  }, {
+	    key: 'decorate',
+	    value: function decorate(alias, definition) {
+	      this.decoratorResolver.add(alias, definition);
+	    }
+	  }, {
 	    key: 'listen',
 	    value: function listen(event, alias, handler) {
 	      if (typeof alias === 'function') {
 	        handler = alias;
-	        alias = _listeners.GLOBAL_LISTENER_NAME;
+	        alias = _listeners.GLOBAL_NAMESPACE;
 	      }
 	      if (!_harmonyReflect2.default.has(this.listeners, event)) {
 	        this.listeners[event] = {};
@@ -202,22 +215,22 @@
 	    key: 'value',
 	    value: function value(alias) {
 	      var value = new _Resolver2.default(this).resolveParameter(alias);
-	      dispatchResolvedListeners(alias, value, this);
-	      return value;
+	      var decoratedValue = this.decoratorResolver.apply(alias, value);
+	      dispatchListeners(alias, decoratedValue, this);
+	      return decoratedValue;
 	    }
 	  }, {
 	    key: 'make',
 	    value: function make(alias) {
 	      var service = new _Resolver2.default(this).resolveService(alias);
-	      dispatchResolvedListeners(alias, service, this);
+	      service = this.decoratorResolver.apply(alias, service);
+	      dispatchListeners(alias, service, this);
 	      return service;
 	    }
 	  }, {
 	    key: 'tagged',
-	    value: function tagged(alias) {
-	      var tag = new _Resolver2.default(this).resolveTag(alias);
-	      // dispatchResolvedListeners(alias, service, this)
-	      return tag;
+	    value: function tagged(name) {
+	      return new _Resolver2.default(this).resolveTag(name);
 	    }
 	  }, {
 	    key: 'call',
@@ -231,7 +244,11 @@
 	    value: function wrap(definition, dependencies) {
 	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
-	      return definition.bind.apply(definition, [context].concat(_toConsumableArray(resolveDependencies(dependencies, this))));
+	      var resolver = new _Resolver2.default(this);
+	      var resolvedDeps = dependencies.map(function (dependency) {
+	        return resolver.resolveServiceDependencies(dependency, null);
+	      });
+	      return definition.bind.apply(definition, [context].concat(_toConsumableArray(resolvedDeps)));
 	    }
 	  }]);
 
@@ -255,20 +272,6 @@
 	  return _harmonyReflect2.default.get(flask.tags, name) || null;
 	};
 
-	var resolveDependencies = function resolveDependencies(dependencies, flask) {
-	  var resolver = new _Resolver2.default(flask);
-	  return dependencies.map(function (dependency) {
-	    return resolver.resolveServiceDependencies(dependency);
-	  });
-	};
-
-	var findGlobalListeners = function findGlobalListeners(event, flask) {
-	  if (_harmonyReflect2.default.has(flask.listeners, event)) {
-	    return _harmonyReflect2.default.get(flask.listeners[event], _listeners.GLOBAL_LISTENER_NAME) || [];
-	  }
-	  return [];
-	};
-
 	var findListeners = function findListeners(event, alias, flask) {
 	  if (_harmonyReflect2.default.has(flask.listeners, event)) {
 	    return _harmonyReflect2.default.get(flask.listeners[event], alias) || [];
@@ -276,8 +279,8 @@
 	  return [];
 	};
 
-	var dispatchResolvedListeners = function dispatchResolvedListeners(alias, instance, flask) {
-	  findGlobalListeners(_listeners.ON_RESOLVED, flask).concat(findListeners(_listeners.ON_RESOLVED, alias, flask)).map(function (listener) {
+	var dispatchListeners = function dispatchListeners(alias, instance, flask) {
+	  findListeners(_listeners.ON_RESOLVED, _listeners.GLOBAL_NAMESPACE, flask).concat(findListeners(_listeners.ON_RESOLVED, alias, flask)).map(function (listener) {
 	    listener(instance, flask);
 	  });
 	};
@@ -2763,91 +2766,219 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.configureFlask = undefined;
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _harmonyReflect = __webpack_require__(5);
 
 	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
 
-	var _config = __webpack_require__(8);
+	var _listeners = __webpack_require__(8);
+
+	var _DecoratorResolver = __webpack_require__(9);
+
+	var _config = __webpack_require__(10);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var configureFlask = exports.configureFlask = function configureFlask(configObject, flask) {
-	  registerConfigValues(_harmonyReflect2.default.get(configObject, 'config') || {}, flask);
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	  if (_harmonyReflect2.default.has(configObject, 'parameters')) {
-	    registerParameters(configObject.parameters, flask);
+	var Configurator = function () {
+	  function Configurator(flask) {
+	    _classCallCheck(this, Configurator);
+
+	    this.flask = flask;
 	  }
-	  if (_harmonyReflect2.default.has(configObject, 'services')) {
-	    registerServices(configObject.services, flask);
-	  }
-	  if (_harmonyReflect2.default.has(configObject, 'listeners')) {
-	    registerGlobalListeners(configObject.listeners, flask);
-	  }
-	};
 
-	var registerConfigValues = function registerConfigValues(config, flask) {
-	  for (var key in config) {
-	    flask.setConfigValue(key, config[key]);
-	  }
-	  registerDefaultConfigValue(flask);
-	};
+	  _createClass(Configurator, [{
+	    key: 'configure',
+	    value: function configure(confObject) {
+	      this.registerDefaultConfiguration();
 
-	var registerDefaultConfigValue = function registerDefaultConfigValue(flask) {
-	  flask.setConfigValue('serviceDelimiter', flask.config.serviceDelimiter || _config.SERVICE_DELIMITER_CHAR);
-	  flask.setConfigValue('paramDelimiter', flask.config.paramDelimiter || _config.PARAMETER_DELIMITER_CHAR);
-	  flask.setConfigValue('tagDelimiter', flask.config.tagDelimiter || _config.TAG_DELIMITER_CHAR);
-	};
-
-	var registerParameters = function registerParameters(parameters, flask) {
-	  for (var param in parameters) {
-	    flask.parameter(param, parameters[param]);
-	  }
-	};
-
-	var registerServices = function registerServices(services, flask) {
-	  for (var alias in services) {
-	    var service = _harmonyReflect2.default.get(services[alias], 'service');
-	    var args = _harmonyReflect2.default.get(services[alias], 'arguments') || [];
-	    var tags = _harmonyReflect2.default.get(services[alias], 'tags') || [];
-	    var listeners = _harmonyReflect2.default.get(services[alias], 'listeners') || {};
-	    var isSingleton = _harmonyReflect2.default.get(services[alias], 'singleton') || false;
-
-	    isSingleton === true ? flask.singleton(alias, service, args) : flask.service(alias, service, args);
-
-	    registerTags(alias, tags, flask);
-	    registerServiceListeners(alias, listeners, flask);
-	  }
-	};
-
-	var registerTags = function registerTags(alias, tags, flask) {
-	  if (!Array.isArray(tags)) {
-	    tags = [tags];
-	  }
-	  for (var tag in tags) {
-	    flask.tag(tags[tag], alias);
-	  }
-	};
-
-	var registerGlobalListeners = function registerGlobalListeners(listeners, flask) {
-	  for (var type in listeners) {
-	    for (var index in listeners[type]) {
-	      flask.listen(type, listeners[type][index]);
+	      this.registerConfigValues(confObject);
+	      this.registerParameters(confObject);
+	      this.registerServices(confObject);
+	      this.registerGlobalDecorators(confObject);
+	      this.registerGlobalListeners(confObject);
 	    }
-	  }
-	};
-
-	var registerServiceListeners = function registerServiceListeners(alias, listeners, flask) {
-	  for (var type in listeners) {
-	    for (var index in listeners[type]) {
-	      flask.listen(type, alias, listeners[type][index]);
+	  }, {
+	    key: 'registerDefaultConfiguration',
+	    value: function registerDefaultConfiguration() {
+	      this.flask.setConfigValue('serviceDelimiter', _config.SERVICE_DELIMITER_CHAR);
+	      this.flask.setConfigValue('paramDelimiter', _config.PARAMETER_DELIMITER_CHAR);
+	      this.flask.setConfigValue('tagDelimiter', _config.TAG_DELIMITER_CHAR);
 	    }
-	  }
-	};
+	  }, {
+	    key: 'registerConfigValues',
+	    value: function registerConfigValues(confObject) {
+	      var values = _harmonyReflect2.default.get(confObject, 'config') || {};
+
+	      for (var key in values) {
+	        this.flask.setConfigValue(key, values[key]);
+	      }
+	    }
+	  }, {
+	    key: 'registerParameters',
+	    value: function registerParameters(confObject) {
+	      var parameters = _harmonyReflect2.default.get(confObject, 'parameters') || {};
+
+	      for (var param in parameters) {
+	        var isObj = _typeof(parameters[param]) === 'object';
+	        var value = isObj ? parameters[param].value : parameters[param];
+	        var tags = isObj ? _harmonyReflect2.default.get(parameters[param], 'tags') || [] : [];
+	        var decorators = isObj ? _harmonyReflect2.default.get(parameters[param], 'decorators') || [] : [];
+
+	        this.flask.parameter(param, value);
+
+	        this.registerTags(param, tags);
+	        this.registerDecorators(param, decorators);
+	      }
+	    }
+	  }, {
+	    key: 'registerServices',
+	    value: function registerServices(confObject) {
+	      var services = _harmonyReflect2.default.get(confObject, 'services') || {};
+
+	      for (var alias in services) {
+	        var service = _harmonyReflect2.default.get(services[alias], 'service');
+	        var args = _harmonyReflect2.default.get(services[alias], 'arguments') || [];
+	        var tags = _harmonyReflect2.default.get(services[alias], 'tags') || [];
+	        var decorators = _harmonyReflect2.default.get(services[alias], 'decorators') || [];
+	        var listeners = _harmonyReflect2.default.get(services[alias], 'listeners') || {};
+	        var isSingleton = _harmonyReflect2.default.get(services[alias], 'singleton') || false;
+
+	        isSingleton === true ? this.flask.singleton(alias, service, args) : this.flask.service(alias, service, args);
+
+	        this.registerTags(alias, tags);
+	        this.registerListeners(alias, listeners);
+	        this.registerDecorators(alias, decorators);
+	      }
+	    }
+	  }, {
+	    key: 'registerTags',
+	    value: function registerTags(alias, tags) {
+	      if (!Array.isArray(tags)) {
+	        tags = [tags];
+	      }
+	      for (var tag in tags) {
+	        this.flask.tag(tags[tag], alias);
+	      }
+	    }
+	  }, {
+	    key: 'registerGlobalDecorators',
+	    value: function registerGlobalDecorators(confObject) {
+	      var decorators = _harmonyReflect2.default.get(confObject, 'decorators') || [];
+	      this.registerDecorators(_DecoratorResolver.GLOBAL_NAMESPACE, decorators);
+	    }
+	  }, {
+	    key: 'registerDecorators',
+	    value: function registerDecorators(alias, decorators) {
+	      if (!Array.isArray(decorators)) {
+	        decorators = [decorators];
+	      }
+	      for (var decorator in decorators) {
+	        this.flask.decorate(alias, decorators[decorator]);
+	      }
+	    }
+	  }, {
+	    key: 'registerGlobalListeners',
+	    value: function registerGlobalListeners(confObject) {
+	      var listeners = _harmonyReflect2.default.get(confObject, 'listeners') || {};
+	      this.registerListeners(_listeners.GLOBAL_NAMESPACE, listeners);
+	    }
+	  }, {
+	    key: 'registerListeners',
+	    value: function registerListeners(alias, listeners) {
+	      for (var type in listeners) {
+	        for (var index in listeners[type]) {
+	          this.flask.listen(type, alias, listeners[type][index]);
+	        }
+	      }
+	    }
+	  }]);
+
+	  return Configurator;
+	}();
+
+	exports.default = Configurator;
 
 /***/ },
 /* 8 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var GLOBAL_NAMESPACE = exports.GLOBAL_NAMESPACE = '__global__';
+	var ON_RESOLVED = exports.ON_RESOLVED = 'resolved';
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.GLOBAL_NAMESPACE = undefined;
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _harmonyReflect = __webpack_require__(5);
+
+	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var GLOBAL_NAMESPACE = exports.GLOBAL_NAMESPACE = '__global__';
+
+	var DecoratorResolver = function () {
+	  function DecoratorResolver(flask) {
+	    _classCallCheck(this, DecoratorResolver);
+
+	    this.flask = flask;
+	    this.decorators = {};
+	  }
+
+	  _createClass(DecoratorResolver, [{
+	    key: 'find',
+	    value: function find(alias) {
+	      return _harmonyReflect2.default.get(this.decorators, alias) || [];
+	    }
+	  }, {
+	    key: 'add',
+	    value: function add(alias, definition) {
+	      if (typeof alias === 'function') {
+	        definition = alias;
+	        alias = GLOBAL_NAMESPACE;
+	      }
+	      this.decorators[alias] = (this.decorators[alias] || []).concat(definition);
+	    }
+	  }, {
+	    key: 'apply',
+	    value: function apply(alias, instance) {
+	      var _this = this;
+
+	      return this.find(GLOBAL_NAMESPACE).concat(this.find(alias)).reduce(function (decoratedInstance, decorator) {
+	        return decorator(decoratedInstance, _this.flask);
+	      }, instance);
+	    }
+	  }]);
+
+	  return DecoratorResolver;
+	}();
+
+	exports.default = DecoratorResolver;
+
+/***/ },
+/* 10 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2860,7 +2991,7 @@
 	var TAG_DELIMITER_CHAR = exports.TAG_DELIMITER_CHAR = '#';
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2870,15 +3001,15 @@
 	});
 	exports.Parameter = exports.Singleton = exports.Service = undefined;
 
-	var _Service = __webpack_require__(10);
+	var _Service = __webpack_require__(12);
 
 	var _Service2 = _interopRequireDefault(_Service);
 
-	var _Singleton = __webpack_require__(11);
+	var _Singleton = __webpack_require__(13);
 
 	var _Singleton2 = _interopRequireDefault(_Singleton);
 
-	var _Parameter = __webpack_require__(12);
+	var _Parameter = __webpack_require__(14);
 
 	var _Parameter2 = _interopRequireDefault(_Parameter);
 
@@ -2889,7 +3020,7 @@
 	exports.Parameter = _Parameter2.default;
 
 /***/ },
-/* 10 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2930,7 +3061,7 @@
 	exports.default = Service;
 
 /***/ },
-/* 11 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2943,7 +3074,7 @@
 
 	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-	var _Service2 = __webpack_require__(10);
+	var _Service2 = __webpack_require__(12);
 
 	var _Service3 = _interopRequireDefault(_Service2);
 
@@ -2985,7 +3116,7 @@
 	exports.default = Singleton;
 
 /***/ },
-/* 12 */
+/* 14 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -3004,18 +3135,6 @@
 	};
 
 	exports.default = Parameter;
-
-/***/ },
-/* 13 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var GLOBAL_LISTENER_NAME = exports.GLOBAL_LISTENER_NAME = '__global__';
-	var ON_RESOLVED = exports.ON_RESOLVED = 'resolved';
 
 /***/ }
 /******/ ]);

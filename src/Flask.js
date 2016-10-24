@@ -5,7 +5,6 @@ import DecoratorResolver from './core/DecoratorResolver'
 import { Service, Singleton, Parameter } from './services'
 import { GLOBAL_NAMESPACE, ON_RESOLVED } from './res/listeners'
 import {
-  tagNotRegisteredException,
   paramAlreadyExistsException,
   serviceAlreadyExistsException
 } from './res/exceptions'
