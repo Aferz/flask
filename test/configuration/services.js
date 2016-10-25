@@ -1,122 +1,89 @@
 import Flask from '../../src/Flask'
-import { Service, Singleton } from '../../src/services'
+import Service from '../../src/core/resolvables/Service'
+import Singleton from '../../src/core/resolvables/Singleton'
+import Reference from '../../src/core/resolvables/Reference'
 
 describe('Services & Singletons', () => {
   it('Set service from instantiation', () => {
-    const serviceA = () => {}
-    function serviceB(){}
+    function definitionA () {}
+    function definitionB () {}
     const config = {
       services: {
-        aliasA: {
-          service: serviceA,
-          arguments: ['Arg 1']
+        serviceA: {
+          service: definitionA
         },
-        aliasB: {
-          service: serviceB
+        serviceB: {
+          service: definitionB,
+          arguments: ['Arg 1']
         }
       }
     }
 
     const flask = new Flask(config)
-    const service1 = flask.services[0]
-    const service2 = flask.services[1]
-    assert.instanceOf(service1, Service)
-    assert.instanceOf(service2, Service)
-    assert.equal(service1.alias, 'aliasA')
-    assert.equal(service2.alias, 'aliasB')
-    assert.equal(service1.definition, serviceA)
-    assert.equal(service2.definition, serviceB)
-    assert.deepEqual(service1.args, ['Arg 1'])
-    assert.deepEqual(service2.args, [])
+    const serviceA = flask.container.services[0]
+    const serviceB = flask.container.services[1]
+    assert.instanceOf(serviceA, Service)
+    assert.instanceOf(serviceB, Service)
+    assert.equal(serviceA.alias, 'serviceA')
+    assert.equal(serviceB.alias, 'serviceB')
+    assert.equal(serviceA.definition, definitionA)
+    assert.equal(serviceB.definition, definitionB)
+    assert.deepEqual(serviceA.references, [])
+    assert.instanceOf(serviceB.references[0], Reference)
+    assert.deepEqual(serviceB.references[0].value, 'Arg 1')
   })
 
   it('Set singleton from instantiation', () => {
-    const serviceA = () => {}
-    function serviceB () {}
+    function definitionA () {}
     const config = {
       services: {
-        aliasA: {
-          service: serviceA,
+        serviceA: {
+          service: definitionA,
           arguments: ['Arg 1'],
-          singleton: true
-        },
-        aliasB: {
-          service: serviceB,
           singleton: true
         }
       }
     }
 
     const flask = new Flask(config)
-    const service1 = flask.services[0]
-    const service2 = flask.services[1]
-    assert.instanceOf(service1, Singleton)
-    assert.instanceOf(service2, Singleton)
-    assert.equal(service1.alias, 'aliasA')
-    assert.equal(service2.alias, 'aliasB')
-    assert.equal(service1.definition, serviceA)
-    assert.equal(service2.definition, serviceB)
-    assert.deepEqual(service1.args, ['Arg 1'])
-    assert.deepEqual(service2.args, [])
+    const serviceA = flask.container.services[0]
+    assert.instanceOf(serviceA, Singleton)
+    assert.equal(serviceA.alias, 'serviceA')
+    assert.equal(serviceA.definition, definitionA)
+    assert.instanceOf(serviceA.references[0], Reference)
+    assert.deepEqual(serviceA.references[0].value, 'Arg 1')
   })
 
   it('Set service manually', () => {
-    const serviceA = () => {}
-    const serviceB = () => {}
+    const definitionA = () => {}
+    const definitionB = () => {}
     const flask = new Flask()
-    flask.service('aliasA', serviceA, ['Arg 1'])
-    flask.service('aliasB', serviceB)
+    flask.service('serviceA', definitionA)
+    flask.service('serviceB', definitionB, ['Arg 1'])
 
-    const service1 = flask.services[0]
-    const service2 = flask.services[1]
-    assert.instanceOf(service1, Service)
-    assert.instanceOf(service2, Service)
-    assert.equal(service1.alias, 'aliasA')
-    assert.equal(service2.alias, 'aliasB')
-    assert.equal(service1.definition, serviceA)
-    assert.equal(service2.definition, serviceB)
-    assert.deepEqual(service1.args, ['Arg 1'])
-    assert.deepEqual(service2.args, [])
+    const serviceA = flask.container.services[0]
+    const serviceB = flask.container.services[1]
+    assert.instanceOf(serviceA, Service)
+    assert.instanceOf(serviceB, Service)
+    assert.equal(serviceA.alias, 'serviceA')
+    assert.equal(serviceB.alias, 'serviceB')
+    assert.equal(serviceA.definition, definitionA)
+    assert.equal(serviceB.definition, definitionB)
+    assert.deepEqual(serviceA.references, [])
+    assert.instanceOf(serviceB.references[0], Reference)
+    assert.deepEqual(serviceB.references[0].value, 'Arg 1')
   });
 
   it('Set singleton manually', () => {
-    const serviceA = () => {}
-    const serviceB = () => {}
+    const definitionA = () => {}
     const flask = new Flask()
-    flask.singleton('aliasA', serviceA, ['Arg 1'])
-    flask.singleton('aliasB', serviceB)
+    flask.singleton('serviceA', definitionA, ['Arg 1'])
 
-    const service1 = flask.services[0]
-    const service2 = flask.services[1]
-    assert.instanceOf(service1, Singleton)
-    assert.instanceOf(service2, Singleton)
-    assert.equal(service1.alias, 'aliasA')
-    assert.equal(service2.alias, 'aliasB')
-    assert.equal(service1.definition, serviceA)
-    assert.equal(service2.definition, serviceB)
-    assert.deepEqual(service1.args, ['Arg 1'])
-    assert.deepEqual(service2.args, [])
+    const serviceA = flask.container.services[0]
+    assert.instanceOf(serviceA, Singleton)
+    assert.equal(serviceA.alias, 'serviceA')
+    assert.equal(serviceA.definition, definitionA)
+    assert.instanceOf(serviceA.references[0], Reference)
+    assert.deepEqual(serviceA.references[0].value, 'Arg 1')
   });
-
-  it('Throw exception setting a service twice', () => {
-    const flask = new Flask()
-    flask.service('aliasA', () => {})
-
-    assert.throws(
-      () => flask.service('aliasA', () => {}),
-      Error,
-      "Service 'aliasA' already exists in flask."
-    )
-  })
-
-  it('Throw exception setting a singleton twice', () => {
-    const flask = new Flask()
-    flask.singleton('aliasA', () => {})
-
-    assert.throws(
-      () => flask.singleton('aliasA', () => {}),
-      Error,
-      "Service 'aliasA' already exists in flask."
-    )
-  })
 })

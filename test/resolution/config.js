@@ -5,12 +5,12 @@ describe('Config Values', () => {
     const flask = new Flask()
     flask.setConfigValue('key', 'value')
 
-    assert.equal(flask.cfg('key'), 'value')
+    assert.equal(flask.config('key'), 'value')
   })
 
   it('Get unregistered value returns null', () => {
     const flask = new Flask()
 
-    assert.equal(flask.cfg('key'), null)
+    assert.equal(flask.config('key'), null)
   })
 })

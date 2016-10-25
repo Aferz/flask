@@ -109,8 +109,8 @@ describe('Services', () => {
     flask.service('Service1', Service1, ['@Service2@'])
     flask.service('Service2', Service2, ['@Service1@'])
 
-    assert.throws(() => flask.make('Service1'), Error, "Circular dependency in service 'Service1'")
-    assert.throws(() => flask.make('Service2'), Error, "Circular dependency in service 'Service2'")
+    assert.throws(() => flask.make('Service1'), Error, "Circular dependency detected: Service1 -> Service2 -> Service1")
+    assert.throws(() => flask.make('Service2'), Error, "Circular dependency detected: Service2 -> Service1 -> Service2")
   })
 
   it('Resolves dependencies definition before call it whe using \'call\' method', () => {

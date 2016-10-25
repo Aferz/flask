@@ -1,88 +1,67 @@
 import Flask from '../../src/Flask'
-import { GLOBAL_NAMESPACE, ON_RESOLVED } from '../../src/res/listeners'
+import { ON_RESOLVED } from '../../src/res/listeners'
+import { GLOBAL_NAMESPACE } from '../../src/core/EventDispatcher'
 
 describe('Listeners', () => {
-  it('Set global listener from instantiation', () => {
+  it('Set global "onResolved" listener from instantiation', () => {
     const func1 = () => {}
     const func2 = () => {}
-    const func3 = () => {}
     const config = {
       listeners: {
-        [ON_RESOLVED]: [func1],
-        custom: [func2, func3]
+        [ON_RESOLVED]: [func1, func2]
       }
     }
 
     const flask = new Flask(config)
-    assert.property(flask.listeners, ON_RESOLVED)
-    assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_NAMESPACE)
-    assert.property(flask.listeners['custom'], GLOBAL_NAMESPACE)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1])
-    assert.deepEqual(flask.listeners['custom'][GLOBAL_NAMESPACE], [func2, func3])
+    assert.property(flask.container.eventDispatcher.listeners, ON_RESOLVED)
+    assert.property(flask.container.eventDispatcher.listeners[ON_RESOLVED], GLOBAL_NAMESPACE)
+    assert.deepEqual(flask.container.eventDispatcher.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1, func2])
   })
 
-  it('Set service listener from instantiation', () => {
+  it('Set alias "onResolved" listener from instantiation', () => {
     class serviceA {}
     const func1 = () => {}
-    const func2 = () => {}
-    const func3 = () => {}
     const config = {
       services: {
         aliasA: {
           service: serviceA,
           listeners: {
-            [ON_RESOLVED]: [func1],
-            custom: [func2, func3]
+            [ON_RESOLVED]: [func1]
           }
         }
       }
     }
 
     const flask = new Flask(config)
-    const service = flask.services[0]
-    assert.property(flask.listeners, ON_RESOLVED)
-    assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], service.alias)
-    assert.property(flask.listeners['custom'], service.alias)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][service.alias], [func1])
-    assert.deepEqual(flask.listeners['custom'][service.alias], [func2, func3])
+    const service = flask.container.services[0]
+    assert.property(flask.container.eventDispatcher.listeners, ON_RESOLVED)
+    assert.property(flask.container.eventDispatcher.listeners[ON_RESOLVED], 'aliasA')
+    assert.deepEqual(flask.container.eventDispatcher.listeners[ON_RESOLVED]['aliasA'], [func1])
   })
 
-  it('Set global listener manually', () => {
+  it('Set global "onResolved" listener manually', () => {
     const func1 = () => {}
     const func2 = () => {}
-    const func3 = () => {}
     const flask = new Flask()
-    flask.listen(ON_RESOLVED, func1)
-    flask.listen('custom', func2)
-    flask.listen('custom', func3)
+    flask.onResolved(func1)
+    flask.onResolved(func2)
 
-    assert.property(flask.listeners, ON_RESOLVED)
-    assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], GLOBAL_NAMESPACE)
-    assert.property(flask.listeners['custom'], GLOBAL_NAMESPACE)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1])
-    assert.deepEqual(flask.listeners['custom'][GLOBAL_NAMESPACE], [func2, func3])
+    assert.property(flask.container.eventDispatcher.listeners, ON_RESOLVED)
+    assert.property(flask.container.eventDispatcher.listeners[ON_RESOLVED], GLOBAL_NAMESPACE)
+    assert.deepEqual(flask.container.eventDispatcher.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1, func2])
   })
 
-  it('Set service listener manually', () => {
+  it('Set alias "onResolved" listener manually', () => {
     class serviceA {}
     const func1 = () => {}
     const func2 = () => {}
-    const func3 = () => {}
     const flask = new Flask()
-    flask.service('aliasA', serviceA)
-    flask.listen(ON_RESOLVED, 'aliasA', func1)
-    flask.listen('custom', 'aliasA', func2)
-    flask.listen('custom', 'aliasA', func3)
+    flask.onResolved('aliasA', func1)
+    flask.onResolved('aliasA', func2)
 
-    const service = flask.services[0]
-    assert.property(flask.listeners, ON_RESOLVED)
-    assert.property(flask.listeners, 'custom')
-    assert.property(flask.listeners[ON_RESOLVED], service.alias)
-    assert.property(flask.listeners['custom'], service.alias)
-    assert.deepEqual(flask.listeners[ON_RESOLVED][service.alias], [func1])
-    assert.deepEqual(flask.listeners['custom'][service.alias], [func2, func3])
+    const service = flask.container.services[0]
+    assert.property(flask.container.eventDispatcher.listeners, ON_RESOLVED)
+    assert.property(flask.container.eventDispatcher.listeners[ON_RESOLVED], 'aliasA')
+    assert.deepEqual(flask.container.eventDispatcher.listeners[ON_RESOLVED]['aliasA'], [func1, func2])
   })
 })

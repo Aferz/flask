@@ -12,6 +12,7 @@
     "build:min": "webpack --config build/webpack.min.config.js",
     "build:umd": "webpack --config build/webpack.umd.config.js",
     "test": "npm run test:unit",
+    "test:watch": "mocha --compilers js:babel-core/register test/index.js --watch",
     "test:unit": "mocha --compilers js:babel-core/register test/index.js",
     "test:coverage": "babel-node ./node_modules/.bin/babel-istanbul cover _mocha -- test/index.js && npm run coverage:open",
     "coverage:open": "open coverage/lcov-report/index.html",

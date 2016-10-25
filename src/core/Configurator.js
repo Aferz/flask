@@ -1,16 +1,19 @@
 import Reflect from 'harmony-reflect'
-import { GLOBAL_NAMESPACE as GLOBAL_NAMESPACE_LISTENERS } from '../res/listeners'
+import { GLOBAL_NAMESPACE as GLOBAL_NAMESPACE_LISTENERS } from '../core/EventDispatcher'
 import { GLOBAL_NAMESPACE as GLOBAL_NAMESPACE_DECORATOR } from '../core/DecoratorResolver'
 import { PARAMETER_DELIMITER_CHAR, SERVICE_DELIMITER_CHAR, TAG_DELIMITER_CHAR } from '../res/config'
 
 export default class Configurator {
-  constructor(flask) {
-    this.flask = flask
+  constructor(container) {
+    this.container = container
   }
 
-  configure(confObject) {
+  instantiationConfiguration(confObject) {
     this.registerDefaultConfiguration()
+    this.merge(confObject)
+  }
 
+  merge(confObject) {
     this.registerConfigValues(confObject)
     this.registerParameters(confObject)
     this.registerServices(confObject)
@@ -19,16 +22,16 @@ export default class Configurator {
   }
 
   registerDefaultConfiguration() {
-    this.flask.setConfigValue('serviceDelimiter', SERVICE_DELIMITER_CHAR)
-    this.flask.setConfigValue('paramDelimiter', PARAMETER_DELIMITER_CHAR)
-    this.flask.setConfigValue('tagDelimiter', TAG_DELIMITER_CHAR)
+    this.container.addConfigValue('serviceDelimiter', SERVICE_DELIMITER_CHAR)
+    this.container.addConfigValue('paramDelimiter', PARAMETER_DELIMITER_CHAR)
+    this.container.addConfigValue('tagDelimiter', TAG_DELIMITER_CHAR)
   }
 
   registerConfigValues(confObject) {
     const values = Reflect.get(confObject, 'config') || {}
 
     for (let key in values) {
-      this.flask.setConfigValue(key, values[key])
+      this.container.addConfigValue(key, values[key])
     }
   }
 
@@ -41,9 +44,9 @@ export default class Configurator {
       const tags = isObj ? Reflect.get(parameters[param], 'tags') || [] : []
       const decorators = isObj ? Reflect.get(parameters[param], 'decorators') || [] : []
 
-      this.flask.parameter(param, value)
+      this.container.addParameter(param, value)
 
-      this.registerTags(param, tags)
+      this.registerTags(param, tags, this.container.getConfigValue('paramDelimiter'))
       this.registerDecorators(param, decorators)
     }
   }
@@ -59,22 +62,20 @@ export default class Configurator {
       const listeners = Reflect.get(services[alias], 'listeners') || {}
       const isSingleton = Reflect.get(services[alias], 'singleton') || false
 
-      isSingleton === true
-        ? this.flask.singleton(alias, service, args)
-        : this.flask.service(alias, service, args)
+      this.container.addService(alias, service, args, isSingleton)
 
-      this.registerTags(alias, tags)
+      this.registerTags(alias, tags, this.container.getConfigValue('serviceDelimiter'))
       this.registerListeners(alias, listeners)
       this.registerDecorators(alias, decorators)
     }
   }
 
-  registerTags(alias, tags) {
-    if (!Array.isArray(tags)) {
-      tags = [tags]
+  registerTags(alias, references, delimiter) {
+    if (!Array.isArray(references)) {
+      references = [references]
     }
-    for (let tag in tags) {
-      this.flask.tag(tags[tag], alias)
+    for (let reference in references) {
+      this.container.addTag(references[reference], `${delimiter}${alias}${delimiter}`)
     }
   }
 
@@ -88,7 +89,7 @@ export default class Configurator {
       decorators = [decorators]
     }
     for (let decorator in decorators) {
-      this.flask.decorate(alias, decorators[decorator])
+      this.container.addDecorator(alias, decorators[decorator])
     }
   }
 
@@ -100,7 +101,7 @@ export default class Configurator {
   registerListeners(alias, listeners) {
     for (let type in listeners) {
       for (let index in listeners[type]) {
-        this.flask.listen(type, alias, listeners[type][index])
+        this.container.addListener(type, alias, listeners[type][index])
       }
     }
   }

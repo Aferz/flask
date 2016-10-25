@@ -69,11 +69,11 @@ describe('Parameters', () => {
     assert.throws(() => flask.value('key'), "Parameter 'key' not registered in flask")
   })
 
-  it('Throw exception when resolving circular dependency', () => {
+  it('Throws exception when resolving circular dependency', () => {
     const flask = new Flask()
     flask.parameter('key', '%key2%')
     flask.parameter('key2', '%key%')
 
-    assert.throws(() => flask.value('key'), Error, "Circular dependency in parameter 'key'")
+    assert.throws(() => flask.value('key'), Error, "Circular dependency detected: key -> key2 -> key")
   })
 })

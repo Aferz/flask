@@ -16,17 +16,15 @@ It offers support for <code>services</code>, <code>singletons</code>, <code>para
   - [*.singleton(alias, definition [, args = []])*](https://github.com/Aferz/flask#singletonalias-definition--args--)
   - [*.make(alias)*](https://github.com/Aferz/flask#makealias)
 - [Tagging](https://github.com/Aferz/flask#tagging)
-  - [*.tag(name, aliases)*](https://github.com/Aferz/flask#tagname-aliases)
-  - [*.tagged(name)*](https://github.com/Aferz/flask#taggedname)
+  - [*.tag(alias, services)*](https://github.com/Aferz/flask#tagname-aliases)
+  - [*.tagged(alias)*](https://github.com/Aferz/flask#taggedname)
 - [Decorators](https://github.com/Aferz/flask#decorators)
   - [*.decorate(alias, definition)*](https://github.com/Aferz/flask/tree/develop#decoratealias-definition)
 - [Calling & Wrapping](https://github.com/Aferz/flask#calling--wrapping)
   - [*.call(definition, dependencies[, context = null])*](https://github.com/Aferz/flask#calldefinition-dependencies-context--null)
   - [*.wrap(definition, dependencies[, context = null])*](https://github.com/Aferz/flask#wrapdefinition-dependencies-context--null)
 - [Eventing](https://github.com/Aferz/flask#eventing)
-  - [*.listen(event, alias, handler)*](https://github.com/Aferz/flask#listenevent-alias-handler)
-    - [Globally](https://github.com/Aferz/flask#globally)
-    - [Service/Parameter Scoped](https://github.com/Aferz/flask#serviceparameter-scoped)
+  - [*.onResolved(alias, handler)*](https://github.com/Aferz/flask#onresolved-alias-handler)
 - [Config](https://github.com/Aferz/flask#config)
   - [*.setConfigValue(key, value)*](https://github.com/Aferz/flask#setconfigvaluekey-value)
   - [*.cfg(key)*](https://github.com/Aferz/flask#cfgkey)
@@ -93,7 +91,7 @@ Not bad. By the way, the order of registering doesn't matter.
 
 ## Services & Singletons
 
-Services are a <i>fancy</i> word to describe super cool reusable objects. That's all. Flask helps you building this objects for you and resolving its dependencies. This way you allways know your objects are created in the same way, making your code less complex, more secure and realiable.
+Services are a <i>fancy</i> word to describe super cool reusable objects. That's all. Flask helps you building this objects for you and resolving its dependencies. This way you allways know your objects are created in the same way, making your code less complex, more secure and reliable.
 
 <b>Important note:</b> all services are created with the <b><i>new</i></b> keyword. Don't say I didn't tell you.
 
@@ -176,7 +174,7 @@ This function support infinite nested dependencies. (Not really, javascript will
 
 Tagging it's the way Flask offers to classify and resolve multiple primitive types, services, parameters or even tags at once.
 
-### .tag(name, aliases)
+### .tag(alias, services)
 
 ```javascript
   function Superman() {}
@@ -191,7 +189,7 @@ Tagging it's the way Flask offers to classify and resolve multiple primitive typ
   flask.tag('JusticeLeague', ['@Superman@', '@WonderWoman@', '@Batman@', '%Aquaman%']);
 ```
 
-### .tagged(name)
+### .tagged(alias)
 
 With this method we'll retrieve the registered tag out the container:
 
@@ -222,7 +220,7 @@ Of course, Flask offers support for resolving tags by reference:
 
 ## Decorators
 
-Flask offers functionality for decorate your services/singletons and parameters. A decorator it's a design pattern that allows you to modify an object without touch its original source.
+Flask offers functionality for decorate your services/singletons and parameters. A decorator its to add functionality to an object without touch its original source.
 
 ### .decorate(alias, definition)
 
@@ -235,14 +233,14 @@ This is the proper way to register decorators and it can be used on two ways:
   });
 ```
 
-#### Applied for service or parameter
+#### Applied only for specified service or parameter
 ```javascript
   flask.decorate('ServiceA', function (instance, flask) {
     // this will be executed before instance is returned ONLY for ServiceA
   });
 ```
 
-<b>Note:</b> The listener will be executed in order they were registered.
+<b>Note:</b> Decorators are executed in order they were registered.
 
 
 ## Calling & Wrapping
@@ -287,56 +285,43 @@ As you can see, this method will call inmediately the passed definition, but ...
 
 ## Eventing
 
-Wouldn't be nice if you could listen events emitted by Flask? Well, i have good news for you:
+Wouldn't be nice if you could listen events emitted by Flask? Well, i have good news for you. There are two ways when registering listeners:
 
-### .listen(event, alias, handler)
-
-This is the proper way to register events and it can be used on two ways:
-
-#### Applied globally
+#### Globally
 ```javascript
-  flask.listen('eventName', function (instance, flask) {
+  flask.<eventName>(function (instance, flask) {
     // this will be executed before instance is returned for EVERY service/parameter resolved
   });
 ```
 
-#### Applied for service or parameter
+#### Applied only for specified service or parameter
 ```javascript
-  flask.listen('eventName', 'ServiceA', function (instance, flask) {
+  flask.<eventName>('ServiceA', function (instance, flask) {
     // this will be executed before instance is returned ONLY for ServiceA
   });
 ```
 
-<b>Note:</b> The listener will be executed in order they were registered.
+Here we have a list of currently supported events:
 
-Harcoding name of the event is a bad practice, thats why Flask offers right out the box useful constants for this purpose:
+### .onResolved(alias, handler)
+
+This method will register a listener that will be fired after service/parameter is resolved and instantiated:
 
 ```javascript
-// ES6
-import { ON_RESOLVED } from 'flask-container/res/listeners'
-
-// Node
-var onResolved = require('flask-container/res/listeners').ON_RESOLVED
-
-// Browser
-var onResolved = Flask.listeners.ON_RESOLVED
+  flask.onResolved(function (instance, flask) {
+    // this will be executed before instance is returned for EVERY service/parameter resolved
+  });
 ```
-
-Here is a table to help you with the event system:
-
-Event Name     | Constant               | Fires when ...
-:------------: | :--------------------: | :-----------:
-resolved | ON_RESOLVED | After service/parameter is instantiated. *It'll only affect to requested one, not its dependencies.*
-(WIP) | (WIP) | (WIP) | Before service/parameter is instantiated. *It'll only affect to requested one, not its dependencies.*
 
 ## Config
 
 We can modify the internals of our Flask container through configuration variables. Here is a list of variables that can be modified:
 
-Name  | Default value | What it does
-:---: | :-----------: | :----------:
-serviceDelimiter | @ | It delimites the reference of a service when resolving arguments injection
-parameterDelimiter | % | It delimites the reference of a parameter when resolving arguments injection
+Name               | Default value | What it does
+:----------------: | :-----------: | :----------:
+serviceDelimiter   | @ | It delimites the reference of a service when resolving arguments injection.
+parameterDelimiter | % | It delimites the reference of a parameter when resolving arguments injection.
+parameterDelimiter | % | It delimites the reference of a parameter when resolving arguments injection.
 
 ### .setConfigValue(key, value)
 

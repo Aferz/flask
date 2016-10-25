@@ -1,6 +1,31 @@
 import Flask from '../../src/Flask'
 
 describe('Tags', () => {
+  it('Resolves registered tags loaded from configuration', () => {
+    function definitionA () {}
+    const config = {
+      parameters: {
+        paramA: {
+          value: 'value',
+          tags: 'tag1'
+        }
+      },
+      services: {
+        aliasA: {
+          service: definitionA,
+          tags: ['tag1', 'tag2']
+        }
+      }
+    }
+
+    const flask = new Flask(config)
+    const resolvedDeps1 = flask.tagged('tag1')
+    const resolvedDeps2 = flask.tagged('tag2')
+    assert.deepEqual(resolvedDeps1[0], 'value')
+    assert.instanceOf(resolvedDeps1[1], definitionA)
+    assert.instanceOf(resolvedDeps2[0], definitionA)
+  })
+
   it('Resolves registered tag with primitives dependencies', () => {
     const flask = new Flask()
     const customObj = { key: 'value' }
@@ -66,7 +91,7 @@ describe('Tags', () => {
     flask.tag('tag1', ['#tag2#'])
     flask.tag('tag2', ['#tag1#'])
 
-    assert.throws(() => flask.tagged('tag1'), Error, "Circular dependency in tag 'tag1'")
-    assert.throws(() => flask.tagged('tag2'), Error, "Circular dependency in tag 'tag2'")
+    assert.throws(() => flask.tagged('tag1'), Error, "Circular dependency detected: tag1 -> tag2 -> tag1")
+    assert.throws(() => flask.tagged('tag2'), Error, "Circular dependency detected: tag2 -> tag1 -> tag2")
   })
 })

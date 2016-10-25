@@ -1,141 +1,80 @@
-import Resolver from './Resolver'
-import Reflect from 'harmony-reflect'
-import Configurator from './core/Configurator'
-import DecoratorResolver from './core/DecoratorResolver'
-import { Service, Singleton, Parameter } from './services'
-import { GLOBAL_NAMESPACE, ON_RESOLVED } from './res/listeners'
-import {
-  paramAlreadyExistsException,
-  serviceAlreadyExistsException
-} from './res/exceptions'
+import Container from './core/Container'
+import { ON_RESOLVED } from './res/listeners'
 
 export default class Flask {
   constructor(config = {}) {
-    this.config = {}
-    this.parameters = []
-    this.services = []
-    this.tags = {}
-    this.listeners = {}
-    this.decoratorResolver = new DecoratorResolver(this)
-    this.configResolver = new Configurator(this)
-
-    this.configResolver.configure(config)
+    this.container = new Container(this, config)
   }
 
   setConfigValue(key, value) {
-    this.config[key] = value
+    this.container.addConfigValue(key, value)
+    return this
   }
 
   parameter(alias, value) {
-    const parameter = findParameter(alias, this)
-    if (parameter) {
-      throw paramAlreadyExistsException(alias)
-    }
-
-    this.parameters.push(new Parameter(alias, value))
+    this.container.addParameter(alias, value)
+    return this
   }
 
   service(alias, definition, args = []) {
-    const service = findService(alias, this)
-    if (service) {
-      throw serviceAlreadyExistsException(alias)
-    }
-
-    this.services.push(new Service(alias, definition, args))
+    this.container.addService(alias, definition, args)
+    return this
   }
 
   singleton(alias, definition, args = []) {
-    const service = findService(alias, this)
-    if (service) {
-      throw serviceAlreadyExistsException(alias)
-    }
-
-    this.services.push(new Singleton(alias, definition, args))
+    this.container.addService(alias, definition, args, true)
+    return this
   }
 
-  tag(name, alias) {
-    if (!Array.isArray(alias)) {
-      alias = [alias]
-    }
-    this.tags[name] = (this.tags[name] || []).concat(alias)
+  tag(alias, services) {
+    this.container.addTag(alias, services)
+    return this
   }
 
   decorate(alias, definition) {
-    this.decoratorResolver.add(alias, definition)
+    this.container.addDecorator(alias, definition)
+    return this
   }
 
+  /* istanbul ignore next */
   listen(event, alias, handler) {
-    if (typeof alias === 'function') {
-      handler = alias
-      alias = GLOBAL_NAMESPACE
-    }
-    if (!Reflect.has(this.listeners, event)) {
-      this.listeners[event] = {}
-    }
-    if (!Array.isArray(this.listeners[event][alias])) {
-      this.listeners[event][alias] = []
-    }
-    this.listeners[event][alias].push(handler)
+    console.warn('Method deprecated since 1.3.0 release. I\'t will be removed in 2.0 release. Use event named methods.')
+    this.container.addListener(event, alias, handler)
+    return this
   }
 
+  onResolved(alias, handler) {
+    this.container.addListener(ON_RESOLVED, alias, handler)
+    return this
+  }
+
+  /* istanbul ignore next */
   cfg(key) {
-    return Reflect.get(this.config, key) || null
+    console.warn('Method deprecated since 1.3.0 release. I\'t will be removed in 2.0 release. Use \'.config()\' method instead.')
+    return this.config(key)
+  }
+
+  config(key) {
+    return this.container.getConfigValue(key)
   }
 
   value(alias) {
-    const value = new Resolver(this).resolveParameter(alias)
-    const decoratedValue = this.decoratorResolver.apply(alias, value)
-    dispatchListeners(alias, decoratedValue, this)
-    return decoratedValue
+    return this.container.makeParameter(alias)
   }
 
   make(alias) {
-    let service = new Resolver(this).resolveService(alias)
-    service = this.decoratorResolver.apply(alias, service)
-    dispatchListeners(alias, service, this)
-    return service
+    return this.container.makeService(alias)
   }
 
-  tagged(name) {
-    return new Resolver(this).resolveTag(name)
+  tagged(alias) {
+    return this.container.makeTag(alias)
   }
 
-  call(definition, dependencies, context = null) {
-    return this.wrap(definition, dependencies, context)()
+  wrap(definition, args, context = null) {
+    return this.container.makeFunction(definition, args, context)
   }
 
-  wrap(definition, dependencies, context = null) {
-    const resolver = new Resolver(this)
-    const resolvedDeps = dependencies.map(dependency => {
-      return resolver.resolveServiceDependencies(dependency, null)
-    })
-    return definition.bind(context, ...resolvedDeps)
+  call(definition, args, context = null) {
+    return this.wrap(definition, args, context)()
   }
-}
-
-export const findParameter = (alias, flask) => {
-  return flask.parameters.find(parameter => parameter.alias === alias)
-}
-
-export const findService = (alias, flask) => {
-  return flask.services.find(service => service.alias === alias)
-}
-
-export const findTag = (name, flask) => {
-  return Reflect.get(flask.tags, name) || null
-}
-
-const findListeners = (event, alias, flask) => {
-  if (Reflect.has(flask.listeners, event)) {
-    return Reflect.get(flask.listeners[event], alias) || []
-  }
-  return []
-}
-
-const dispatchListeners = (alias, instance, flask) => {
-  findListeners(ON_RESOLVED, GLOBAL_NAMESPACE, flask)
-    .concat(findListeners(ON_RESOLVED, alias, flask))
-    .map(listener => {
-      listener(instance, flask)
-    })
 }
