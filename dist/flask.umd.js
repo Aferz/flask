@@ -1,5 +1,5 @@
 /*!
- * Flask.js v1.2.0
+ * Flask.js v1.3.0
  * (c) 2016 Alejandro Fernandez
  * Released under the MIT License.
  */
@@ -76,7 +76,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _Flask2 = _interopRequireDefault(_Flask);
 
-	var _listeners = __webpack_require__(8);
+	var _listeners = __webpack_require__(15);
 
 	var listeners = _interopRequireWildcard(_listeners);
 
@@ -84,7 +84,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	_Flask2.default._version = '1.2.0';
+	_Flask2.default._version = '1.3.0';
 	_Flask2.default._env = 'development';
 
 	_Flask2.default.listeners = listeners;
@@ -100,35 +100,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.findTag = exports.findService = exports.findParameter = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _Resolver = __webpack_require__(3);
+	var _Container = __webpack_require__(3);
 
-	var _Resolver2 = _interopRequireDefault(_Resolver);
+	var _Container2 = _interopRequireDefault(_Container);
 
-	var _harmonyReflect = __webpack_require__(5);
-
-	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
-
-	var _Configurator = __webpack_require__(7);
-
-	var _Configurator2 = _interopRequireDefault(_Configurator);
-
-	var _DecoratorResolver = __webpack_require__(9);
-
-	var _DecoratorResolver2 = _interopRequireDefault(_DecoratorResolver);
-
-	var _services = __webpack_require__(11);
-
-	var _listeners = __webpack_require__(8);
-
-	var _exceptions = __webpack_require__(6);
+	var _listeners = __webpack_require__(15);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -138,127 +119,107 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _classCallCheck(this, Flask);
 
-	    this.config = {};
-	    this.parameters = [];
-	    this.services = [];
-	    this.tags = {};
-	    this.listeners = {};
-	    this.decoratorResolver = new _DecoratorResolver2.default(this);
-	    this.configResolver = new _Configurator2.default(this);
-
-	    this.configResolver.configure(config);
+	    this.container = new _Container2.default(this, config);
 	  }
 
 	  _createClass(Flask, [{
 	    key: 'setConfigValue',
 	    value: function setConfigValue(key, value) {
-	      this.config[key] = value;
+	      this.container.addConfigValue(key, value);
+	      return this;
 	    }
 	  }, {
 	    key: 'parameter',
 	    value: function parameter(alias, value) {
-	      var parameter = findParameter(alias, this);
-	      if (parameter) {
-	        throw (0, _exceptions.paramAlreadyExistsException)(alias);
-	      }
-
-	      this.parameters.push(new _services.Parameter(alias, value));
+	      this.container.addParameter(alias, value);
+	      return this;
 	    }
 	  }, {
 	    key: 'service',
 	    value: function service(alias, definition) {
 	      var args = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 
-	      var service = findService(alias, this);
-	      if (service) {
-	        throw (0, _exceptions.serviceAlreadyExistsException)(alias);
-	      }
-
-	      this.services.push(new _services.Service(alias, definition, args));
+	      this.container.addService(alias, definition, args);
+	      return this;
 	    }
 	  }, {
 	    key: 'singleton',
 	    value: function singleton(alias, definition) {
 	      var args = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 
-	      var service = findService(alias, this);
-	      if (service) {
-	        throw (0, _exceptions.serviceAlreadyExistsException)(alias);
-	      }
-
-	      this.services.push(new _services.Singleton(alias, definition, args));
+	      this.container.addService(alias, definition, args, true);
+	      return this;
 	    }
 	  }, {
 	    key: 'tag',
-	    value: function tag(name, alias) {
-	      if (!Array.isArray(alias)) {
-	        alias = [alias];
-	      }
-	      this.tags[name] = (this.tags[name] || []).concat(alias);
+	    value: function tag(alias, services) {
+	      this.container.addTag(alias, services);
+	      return this;
 	    }
 	  }, {
 	    key: 'decorate',
 	    value: function decorate(alias, definition) {
-	      this.decoratorResolver.add(alias, definition);
+	      this.container.addDecorator(alias, definition);
+	      return this;
 	    }
+
+	    /* istanbul ignore next */
+
 	  }, {
 	    key: 'listen',
 	    value: function listen(event, alias, handler) {
-	      if (typeof alias === 'function') {
-	        handler = alias;
-	        alias = _listeners.GLOBAL_NAMESPACE;
-	      }
-	      if (!_harmonyReflect2.default.has(this.listeners, event)) {
-	        this.listeners[event] = {};
-	      }
-	      if (!Array.isArray(this.listeners[event][alias])) {
-	        this.listeners[event][alias] = [];
-	      }
-	      this.listeners[event][alias].push(handler);
+	      console.warn('Method deprecated since 1.3.0 release. I\'t will be removed in 2.0 release. Use event named methods.');
+	      this.container.addListener(event, alias, handler);
+	      return this;
 	    }
+	  }, {
+	    key: 'onResolved',
+	    value: function onResolved(alias, handler) {
+	      this.container.addListener(_listeners.ON_RESOLVED, alias, handler);
+	      return this;
+	    }
+
+	    /* istanbul ignore next */
+
 	  }, {
 	    key: 'cfg',
 	    value: function cfg(key) {
-	      return _harmonyReflect2.default.get(this.config, key) || null;
+	      console.warn('Method deprecated since 1.3.0 release. I\'t will be removed in 2.0 release. Use \'.config()\' method instead.');
+	      return this.config(key);
+	    }
+	  }, {
+	    key: 'config',
+	    value: function config(key) {
+	      return this.container.getConfigValue(key);
 	    }
 	  }, {
 	    key: 'value',
 	    value: function value(alias) {
-	      var value = new _Resolver2.default(this).resolveParameter(alias);
-	      var decoratedValue = this.decoratorResolver.apply(alias, value);
-	      dispatchListeners(alias, decoratedValue, this);
-	      return decoratedValue;
+	      return this.container.makeParameter(alias);
 	    }
 	  }, {
 	    key: 'make',
 	    value: function make(alias) {
-	      var service = new _Resolver2.default(this).resolveService(alias);
-	      service = this.decoratorResolver.apply(alias, service);
-	      dispatchListeners(alias, service, this);
-	      return service;
+	      return this.container.makeService(alias);
 	    }
 	  }, {
 	    key: 'tagged',
-	    value: function tagged(name) {
-	      return new _Resolver2.default(this).resolveTag(name);
-	    }
-	  }, {
-	    key: 'call',
-	    value: function call(definition, dependencies) {
-	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-
-	      return this.wrap(definition, dependencies, context)();
+	    value: function tagged(alias) {
+	      return this.container.makeTag(alias);
 	    }
 	  }, {
 	    key: 'wrap',
-	    value: function wrap(definition, dependencies) {
+	    value: function wrap(definition, args) {
 	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
-	      var resolver = new _Resolver2.default(this);
-	      var resolvedDeps = dependencies.map(function (dependency) {
-	        return resolver.resolveServiceDependencies(dependency, null);
-	      });
-	      return definition.bind.apply(definition, [context].concat(_toConsumableArray(resolvedDeps)));
+	      return this.container.makeFunction(definition, args, context);
+	    }
+	  }, {
+	    key: 'call',
+	    value: function call(definition, args) {
+	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+	      return this.wrap(definition, args, context)();
 	    }
 	  }]);
 
@@ -266,34 +227,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 
 	exports.default = Flask;
-	var findParameter = exports.findParameter = function findParameter(alias, flask) {
-	  return flask.parameters.find(function (parameter) {
-	    return parameter.alias === alias;
-	  });
-	};
-
-	var findService = exports.findService = function findService(alias, flask) {
-	  return flask.services.find(function (service) {
-	    return service.alias === alias;
-	  });
-	};
-
-	var findTag = exports.findTag = function findTag(name, flask) {
-	  return _harmonyReflect2.default.get(flask.tags, name) || null;
-	};
-
-	var findListeners = function findListeners(event, alias, flask) {
-	  if (_harmonyReflect2.default.has(flask.listeners, event)) {
-	    return _harmonyReflect2.default.get(flask.listeners[event], alias) || [];
-	  }
-	  return [];
-	};
-
-	var dispatchListeners = function dispatchListeners(alias, instance, flask) {
-	  findListeners(_listeners.ON_RESOLVED, _listeners.GLOBAL_NAMESPACE, flask).concat(findListeners(_listeners.ON_RESOLVED, alias, flask)).map(function (listener) {
-	    listener(instance, flask);
-	  });
-	};
 
 /***/ },
 /* 3 */
@@ -307,254 +240,308 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _toposort = __webpack_require__(4);
+	var _Tag = __webpack_require__(4);
 
-	var _toposort2 = _interopRequireDefault(_toposort);
+	var _Tag2 = _interopRequireDefault(_Tag);
 
-	var _harmonyReflect = __webpack_require__(5);
+	var _Service = __webpack_require__(5);
 
-	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
+	var _Service2 = _interopRequireDefault(_Service);
 
-	var _Flask = __webpack_require__(2);
+	var _Singleton = __webpack_require__(7);
 
-	var _exceptions = __webpack_require__(6);
+	var _Singleton2 = _interopRequireDefault(_Singleton);
+
+	var _Parameter = __webpack_require__(8);
+
+	var _Parameter2 = _interopRequireDefault(_Parameter);
+
+	var _Reference = __webpack_require__(9);
+
+	var _Reference2 = _interopRequireDefault(_Reference);
+
+	var _Resolver = __webpack_require__(10);
+
+	var _Resolver2 = _interopRequireDefault(_Resolver);
+
+	var _Configurator = __webpack_require__(13);
+
+	var _Configurator2 = _interopRequireDefault(_Configurator);
+
+	var _EventDispatcher = __webpack_require__(14);
+
+	var _EventDispatcher2 = _interopRequireDefault(_EventDispatcher);
+
+	var _DecoratorResolver = __webpack_require__(16);
+
+	var _DecoratorResolver2 = _interopRequireDefault(_DecoratorResolver);
+
+	var _exceptions = __webpack_require__(12);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Resolver = function () {
-	  function Resolver(flask) {
-	    _classCallCheck(this, Resolver);
+	var Container = function () {
+	  function Container(flask, config) {
+	    _classCallCheck(this, Container);
 
-	    this.flask = flask;
-	    this.circularDependency = [];
+	    this.config = {};
+
+	    this.tags = [];
+	    this.services = [];
+	    this.parameters = [];
+
+	    this.resolver = new _Resolver2.default(this);
+	    this.configResolver = new _Configurator2.default(this);
+	    this.eventDispatcher = new _EventDispatcher2.default(flask);
+	    this.decoratorResolver = new _DecoratorResolver2.default(flask);
+
+	    this.configResolver.instantiationConfiguration(config);
 	  }
 
-	  _createClass(Resolver, [{
-	    key: 'resolveParameter',
-	    value: function resolveParameter(alias) {
-	      var parentAlias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	  _createClass(Container, [{
+	    key: 'addConfigValue',
+	    value: function addConfigValue(key, value) {
+	      this.config[key] = value;
+	    }
+	  }, {
+	    key: 'addParameter',
+	    value: function addParameter(alias, value) {
+	      this.parameters.push(new _Parameter2.default(alias, this.createReference(value)));
+	    }
+	  }, {
+	    key: 'addService',
+	    value: function addService(alias, definition, args) {
+	      var _this = this;
 
-	      var parameter = (0, _Flask.findParameter)(alias, this.flask);
+	      var isSingleton = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+	      var references = args.map(function (value) {
+	        return _this.createReference(value);
+	      });
+
+	      if (!isSingleton) {
+	        this.services.push(new _Service2.default(alias, definition, references));
+	      } else {
+	        this.services.push(new _Singleton2.default(alias, definition, references));
+	      }
+	    }
+	  }, {
+	    key: 'addTag',
+	    value: function addTag(alias, args) {
+	      var _this2 = this;
+
+	      if (!Array.isArray(args)) {
+	        args = [args];
+	      }
+
+	      var references = args.map(function (value) {
+	        return _this2.createReference(value);
+	      });
+	      var tag = this.findTag(alias);
+	      if (!tag) {
+	        this.tags.push(new _Tag2.default(alias, references));
+	      } else {
+	        tag.addReferences(references);
+	      }
+	    }
+	  }, {
+	    key: 'addDecorator',
+	    value: function addDecorator(alias, definition) {
+	      this.decoratorResolver.add(alias, definition);
+	    }
+	  }, {
+	    key: 'addListener',
+	    value: function addListener(event, alias, handler) {
+	      this.eventDispatcher.addListener(event, alias, handler);
+	    }
+	  }, {
+	    key: 'getConfigValue',
+	    value: function getConfigValue(key) {
+	      return this.config[key] || null;
+	    }
+	  }, {
+	    key: 'makeParameter',
+	    value: function makeParameter(alias) {
+	      var parameter = this.findParameter(alias);
 	      if (!parameter) {
 	        throw (0, _exceptions.paramNotRegisteredException)(alias);
 	      }
-
-	      return this.resolveParameterDependencies(parameter.value, parentAlias);
+	      return this.resolver.resolveParameter(parameter);
 	    }
 	  }, {
-	    key: 'resolveService',
-	    value: function resolveService(alias) {
-	      var _this = this;
-
-	      var parentAlias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
-	      var service = (0, _Flask.findService)(alias, this.flask);
+	    key: 'makeService',
+	    value: function makeService(alias) {
+	      var service = this.findService(alias);
 	      if (!service) {
 	        throw (0, _exceptions.serviceNotRegisteredException)(alias);
 	      }
-
-	      var resolvedDeps = service.args.length === 0 ? [] : service.args.map(function (dependency) {
-	        return _this.resolveServiceDependencies(dependency, parentAlias);
-	      });
-
-	      return service.build(resolvedDeps);
+	      return this.resolver.resolveService(service);
 	    }
 	  }, {
-	    key: 'resolveTag',
-	    value: function resolveTag(alias) {
-	      var _this2 = this;
-
-	      var parentAlias = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
-	      var dependencies = (0, _Flask.findTag)(alias, this.flask);
-	      if (!dependencies) {
+	    key: 'makeTag',
+	    value: function makeTag(alias) {
+	      var tag = this.findTag(alias);
+	      if (!tag) {
 	        throw (0, _exceptions.tagNotRegisteredException)(alias);
 	      }
+	      return this.resolver.resolveTag(tag);
+	    }
+	  }, {
+	    key: 'makeFunction',
+	    value: function makeFunction(definition, args, context) {
+	      var _this3 = this;
 
-	      return dependencies.map(function (dependency) {
-	        return _this2.resolveTagDependencies(dependency, parentAlias);
+	      var deps = args.map(function (value) {
+	        return _this3.createReference(value);
+	      }).map(function (reference) {
+	        return _this3.resolver.resolveReference(reference);
+	      });
+	      return definition.bind.apply(definition, [context].concat(_toConsumableArray(deps)));
+	    }
+	  }, {
+	    key: 'findParameter',
+	    value: function findParameter(alias) {
+	      return this.parameters.find(function (parameter) {
+	        return parameter.alias === alias;
 	      });
 	    }
 	  }, {
-	    key: 'resolveParameterDependencies',
-	    value: function resolveParameterDependencies(reference, parentAlias) {
-	      if (this.isReferenceToParameter(reference)) {
-	        return this.resolveParameterReference(reference, parentAlias);
-	      }
-	      return reference;
+	    key: 'findService',
+	    value: function findService(alias) {
+	      return this.services.find(function (service) {
+	        return service.alias === alias;
+	      });
 	    }
 	  }, {
-	    key: 'resolveServiceDependencies',
-	    value: function resolveServiceDependencies(reference, parentAlias) {
-	      if (this.isReferenceToParameter(reference)) {
-	        return this.resolveParameterReference(reference, parentAlias);
-	      } else if (this.isReferenceToService(reference)) {
-	        return this.resolveServiceReference(reference, parentAlias);
-	      } else if (this.isReferenceToTag(reference)) {
-	        return this.resolveTagReference(reference, parentAlias);
-	      }
-	      return reference;
+	    key: 'findTag',
+	    value: function findTag(alias) {
+	      return this.tags.find(function (tag) {
+	        return tag.alias === alias;
+	      });
 	    }
 	  }, {
-	    key: 'resolveTagDependencies',
-	    value: function resolveTagDependencies(reference, parentAlias) {
-	      // Currently, one tag can resolve its arguments exactly the same
-	      // way than one service, so we'll reuse its resolution function
-	      return this.resolveServiceDependencies(reference, parentAlias);
-	    }
-	  }, {
-	    key: 'resolveParameterReference',
-	    value: function resolveParameterReference(reference, parentAlias) {
-	      var alias = this.extractParameterAliasFromReference(reference);
-	      this.checkCircularDependency(parentAlias, reference);
-	      return this.resolveParameter(alias, reference);
-	    }
-	  }, {
-	    key: 'resolveServiceReference',
-	    value: function resolveServiceReference(reference, parentAlias) {
-	      var alias = this.extractServiceAliasFromReference(reference);
-	      this.checkCircularDependency(parentAlias, reference);
-	      return this.resolveService(alias, reference);
-	    }
-	  }, {
-	    key: 'resolveTagReference',
-	    value: function resolveTagReference(reference, parentAlias) {
-	      var alias = this.extractTagAliasFromReference(reference);
-	      this.checkCircularDependency(parentAlias, reference);
-	      return this.resolveTag(alias, reference);
-	    }
-	  }, {
-	    key: 'checkCircularDependency',
-	    value: function checkCircularDependency(reference, dependency) {
-	      if (reference !== null) {
-	        this.circularDependency.push([reference, dependency]);
-
-	        try {
-	          (0, _toposort2.default)(this.circularDependency);
-	        } catch (e) {
-	          if (this.isReferenceToParameter(reference)) {
-	            throw (0, _exceptions.circularDependencyParameterError)(this.extractParameterAliasFromReference(reference));
-	          } else if (this.isReferenceToService(reference)) {
-	            throw (0, _exceptions.circularDependencyServiceError)(this.extractServiceAliasFromReference(reference));
-	          } else {
-	            throw (0, _exceptions.circularDependencyTagError)(this.extractTagAliasFromReference(reference));
-	          }
-	        }
-	      }
-	    }
-	  }, {
-	    key: 'isReferenceToParameter',
-	    value: function isReferenceToParameter(value) {
-	      var delimiter = _harmonyReflect2.default.get(this.flask.config, 'paramDelimiter');
-	      return typeof value === 'string' && value.match('\\' + delimiter + '.*\\' + delimiter);
-	    }
-	  }, {
-	    key: 'isReferenceToService',
-	    value: function isReferenceToService(value) {
-	      var delimiter = _harmonyReflect2.default.get(this.flask.config, 'serviceDelimiter');
-	      return typeof value === 'string' && value.match('\\' + delimiter + '.*\\' + delimiter);
-	    }
-	  }, {
-	    key: 'isReferenceToTag',
-	    value: function isReferenceToTag(value) {
-	      var delimiter = _harmonyReflect2.default.get(this.flask.config, 'tagDelimiter');
-	      return typeof value === 'string' && value.match('\\' + delimiter + '.*\\' + delimiter);
-	    }
-	  }, {
-	    key: 'extractParameterAliasFromReference',
-	    value: function extractParameterAliasFromReference(value) {
-	      return value.substr(1, value.length - 2);
-	    }
-	  }, {
-	    key: 'extractServiceAliasFromReference',
-	    value: function extractServiceAliasFromReference(value) {
-	      return value.substr(1, value.length - 2);
-	    }
-	  }, {
-	    key: 'extractTagAliasFromReference',
-	    value: function extractTagAliasFromReference(value) {
-	      return value.substr(1, value.length - 2);
+	    key: 'createReference',
+	    value: function createReference(valueOrReference) {
+	      return new _Reference2.default(this.config, valueOrReference);
 	    }
 	  }]);
 
-	  return Resolver;
+	  return Container;
 	}();
 
-	exports.default = Resolver;
+	exports.default = Container;
 
 /***/ },
 /* 4 */
 /***/ function(module, exports) {
 
-	
-	/**
-	 * Topological sorting function
-	 *
-	 * @param {Array} edges
-	 * @returns {Array}
-	 */
+	"use strict";
 
-	module.exports = exports = function(edges){
-	  return toposort(uniqueNodes(edges), edges)
-	}
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 
-	exports.array = toposort
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	function toposort(nodes, edges) {
-	  var cursor = nodes.length
-	    , sorted = new Array(cursor)
-	    , visited = {}
-	    , i = cursor
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	  while (i--) {
-	    if (!visited[i]) visit(nodes[i], i, [])
+	var Tag = function () {
+	  function Tag(alias, references) {
+	    _classCallCheck(this, Tag);
+
+	    this._alias = alias;
+	    this._references = references;
 	  }
 
-	  return sorted
-
-	  function visit(node, i, predecessors) {
-	    if(predecessors.indexOf(node) >= 0) {
-	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
+	  _createClass(Tag, [{
+	    key: "addReferences",
+	    value: function addReferences(references) {
+	      this._references = this._references.concat(references);
 	    }
-
-	    if (!~nodes.indexOf(node)) {
-	      throw new Error('Found unknown node. Make sure to provided all involved nodes. Unknown node: '+JSON.stringify(node))
+	  }, {
+	    key: "make",
+	    value: function make(resolvedDeps) {
+	      return resolvedDeps;
 	    }
-
-	    if (visited[i]) return;
-	    visited[i] = true
-
-	    // outgoing edges
-	    var outgoing = edges.filter(function(edge){
-	      return edge[0] === node
-	    })
-	    if (i = outgoing.length) {
-	      var preds = predecessors.concat(node)
-	      do {
-	        var child = outgoing[--i][1]
-	        visit(child, nodes.indexOf(child), preds)
-	      } while (i)
+	  }, {
+	    key: "alias",
+	    get: function get() {
+	      return this._alias;
 	    }
+	  }, {
+	    key: "references",
+	    get: function get() {
+	      return this._references;
+	    }
+	  }]);
 
-	    sorted[--cursor] = node
-	  }
-	}
+	  return Tag;
+	}();
 
-	function uniqueNodes(arr){
-	  var res = []
-	  for (var i = 0, len = arr.length; i < len; i++) {
-	    var edge = arr[i]
-	    if (res.indexOf(edge[0]) < 0) res.push(edge[0])
-	    if (res.indexOf(edge[1]) < 0) res.push(edge[1])
-	  }
-	  return res
-	}
-
+	exports.default = Tag;
 
 /***/ },
 /* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _harmonyReflect = __webpack_require__(6);
+
+	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Service = function () {
+	  function Service(alias, definition, references) {
+	    _classCallCheck(this, Service);
+
+	    this._alias = alias;
+	    this._definition = definition;
+	    this._references = references;
+	  }
+
+	  _createClass(Service, [{
+	    key: 'make',
+	    value: function make(resolvedDeps) {
+	      return _harmonyReflect2.default.construct(this.definition, resolvedDeps);
+	    }
+	  }, {
+	    key: 'alias',
+	    get: function get() {
+	      return this._alias;
+	    }
+	  }, {
+	    key: 'definition',
+	    get: function get() {
+	      return this._definition;
+	    }
+	  }, {
+	    key: 'references',
+	    get: function get() {
+	      return this._references;
+	    }
+	  }]);
+
+	  return Service;
+	}();
+
+	exports.default = Service;
+
+/***/ },
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {// Copyright (C) 2011-2012 Software Languages Lab, Vrije Universiteit Brussel
@@ -2734,7 +2721,394 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 6 */
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	var _Service2 = __webpack_require__(5);
+
+	var _Service3 = _interopRequireDefault(_Service2);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var Singleton = function (_Service) {
+	  _inherits(Singleton, _Service);
+
+	  /* istanbul ignore next */
+	  function Singleton(alias, definition, references) {
+	    _classCallCheck(this, Singleton);
+
+	    var _this = _possibleConstructorReturn(this, (Singleton.__proto__ || Object.getPrototypeOf(Singleton)).call(this, alias, definition, references));
+
+	    _this._instance = null;
+	    return _this;
+	  }
+
+	  _createClass(Singleton, [{
+	    key: 'make',
+	    value: function make(resolvedDeps) {
+	      if (this._instance !== null) {
+	        return this._instance;
+	      }
+	      /* istanbul ignore next */
+	      return this._instance = _get(Singleton.prototype.__proto__ || Object.getPrototypeOf(Singleton.prototype), 'make', this).call(this, resolvedDeps);
+	    }
+	  }]);
+
+	  return Singleton;
+	}(_Service3.default);
+
+	exports.default = Singleton;
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Parameter = function () {
+	  function Parameter(alias, reference) {
+	    _classCallCheck(this, Parameter);
+
+	    this._alias = alias;
+	    this._reference = reference;
+	  }
+
+	  _createClass(Parameter, [{
+	    key: "make",
+	    value: function make() {
+	      return this.reference.value;
+	    }
+	  }, {
+	    key: "alias",
+	    get: function get() {
+	      return this._alias;
+	    }
+	  }, {
+	    key: "reference",
+	    get: function get() {
+	      return this._reference;
+	    }
+	  }]);
+
+	  return Parameter;
+	}();
+
+	exports.default = Parameter;
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _harmonyReflect = __webpack_require__(6);
+
+	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Reference = function () {
+	  function Reference(config, value) {
+	    _classCallCheck(this, Reference);
+
+	    this._config = config;
+	    this._value = value;
+	  }
+
+	  _createClass(Reference, [{
+	    key: 'extractAlias',
+	    value: function extractAlias() {
+	      return this.value.substr(1, this.value.length - 2);
+	    }
+	  }, {
+	    key: 'isParameter',
+	    value: function isParameter() {
+	      return this.is(_harmonyReflect2.default.get(this.config, 'paramDelimiter'));
+	    }
+	  }, {
+	    key: 'isService',
+	    value: function isService() {
+	      return this.is(_harmonyReflect2.default.get(this.config, 'serviceDelimiter'));
+	    }
+	  }, {
+	    key: 'isTag',
+	    value: function isTag() {
+	      return this.is(_harmonyReflect2.default.get(this.config, 'tagDelimiter'));
+	    }
+	  }, {
+	    key: 'is',
+	    value: function is(delimiter) {
+	      return typeof this.value === 'string' && this.value.match('\\' + delimiter + '.*\\' + delimiter);
+	    }
+	  }, {
+	    key: 'config',
+	    get: function get() {
+	      return this._config;
+	    }
+	  }, {
+	    key: 'value',
+	    get: function get() {
+	      return this._value;
+	    }
+	  }]);
+
+	  return Reference;
+	}();
+
+	exports.default = Reference;
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _toposort = __webpack_require__(11);
+
+	var _toposort2 = _interopRequireDefault(_toposort);
+
+	var _exceptions = __webpack_require__(12);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Resolver = function () {
+	  function Resolver(container) {
+	    _classCallCheck(this, Resolver);
+
+	    this.container = container;
+	  }
+
+	  _createClass(Resolver, [{
+	    key: 'resolveParameter',
+	    value: function resolveParameter(parameter) {
+	      var dependantReference = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var resolvedDeps = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
+	      if (parameter.reference.isParameter()) {
+	        return this.resolveParameterReference(parameter.reference, dependantReference, resolvedDeps);
+	      }
+	      return this.resolveListenersAndDecorators(parameter.alias, parameter.make());
+	    }
+	  }, {
+	    key: 'resolveService',
+	    value: function resolveService(service) {
+	      var _this = this;
+
+	      var dependantReference = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var resolvedDeps = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
+	      var deps = service.references.map(function (reference) {
+	        return _this.resolveReference(reference, dependantReference, resolvedDeps);
+	      });
+	      return this.resolveListenersAndDecorators(service.alias, service.make(deps));
+	    }
+	  }, {
+	    key: 'resolveTag',
+	    value: function resolveTag(tag) {
+	      var _this2 = this;
+
+	      var dependantReference = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var resolvedDeps = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
+	      var deps = tag.references.map(function (reference) {
+	        return _this2.resolveReference(reference, dependantReference, resolvedDeps);
+	      });
+	      return tag.make(deps);
+	    }
+	  }, {
+	    key: 'resolveParameterReference',
+	    value: function resolveParameterReference(reference, dependentReference, resolvedDeps) {
+	      var parameterAlias = reference.extractAlias();
+	      var parameter = this.container.findParameter(parameterAlias);
+
+	      resolvedDeps = this.checkCircularDependency(resolvedDeps, dependentReference, reference);
+	      return this.resolveParameter(parameter, reference, resolvedDeps);
+	    }
+	  }, {
+	    key: 'resolveServiceReference',
+	    value: function resolveServiceReference(reference, dependentReference, resolvedDeps) {
+	      var serviceAlias = reference.extractAlias();
+	      var service = this.container.findService(serviceAlias);
+
+	      resolvedDeps = this.checkCircularDependency(resolvedDeps, dependentReference, reference);
+	      return this.resolveService(service, reference, resolvedDeps);
+	    }
+	  }, {
+	    key: 'resolveTagReference',
+	    value: function resolveTagReference(reference, dependentReference, resolvedDeps) {
+	      var tagAlias = reference.extractAlias();
+	      var tag = this.container.findTag(tagAlias);
+
+	      resolvedDeps = this.checkCircularDependency(resolvedDeps, dependentReference, reference);
+	      return this.resolveTag(tag, reference, resolvedDeps);
+	    }
+	  }, {
+	    key: 'resolveReference',
+	    value: function resolveReference(reference) {
+	      var dependantReference = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var resolvedDeps = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
+	      if (reference.isParameter()) {
+	        return this.resolveParameterReference(reference, dependantReference, resolvedDeps);
+	      } else if (reference.isService()) {
+	        return this.resolveServiceReference(reference, dependantReference, resolvedDeps);
+	      } else if (reference.isTag()) {
+	        return this.resolveTagReference(reference, dependantReference, resolvedDeps);
+	      }
+	      return reference.value;
+	    }
+	  }, {
+	    key: 'resolveListenersAndDecorators',
+	    value: function resolveListenersAndDecorators(alias, instance) {
+	      instance = this.container.decoratorResolver.apply(alias, instance);
+	      this.container.eventDispatcher.dispatchOnResolved(alias, instance);
+	      return instance;
+	    }
+	  }, {
+	    key: 'checkCircularDependency',
+	    value: function checkCircularDependency(resolvedDeps, dependantReference, dependencyReference) {
+	      if (dependantReference !== null && dependencyReference !== null) {
+	        resolvedDeps.push([dependantReference.extractAlias(), dependencyReference.extractAlias()]);
+
+	        try {
+	          (0, _toposort2.default)(resolvedDeps);
+	          return resolvedDeps;
+	        } catch (e) {
+	          throw (0, _exceptions.circularDependencyException)(this.generateCircularDependencyMessage(resolvedDeps));
+	        }
+	      }
+	    }
+	  }, {
+	    key: 'generateCircularDependencyMessage',
+	    value: function generateCircularDependencyMessage(resolvedDeps) {
+	      var depsChain = resolvedDeps.reverse().reduce(function (carry, current) {
+	        /* istanbul ignore next */
+	        if (carry.length === 0 || carry[carry.length - 1] === current[1]) {
+	          carry.push(current[0]);
+	        }
+	        return carry;
+	      }, []);
+
+	      return depsChain.join(' -> ').concat(' -> ' + depsChain[0]);
+	    }
+	  }]);
+
+	  return Resolver;
+	}();
+
+	exports.default = Resolver;
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	
+	/**
+	 * Topological sorting function
+	 *
+	 * @param {Array} edges
+	 * @returns {Array}
+	 */
+
+	module.exports = exports = function(edges){
+	  return toposort(uniqueNodes(edges), edges)
+	}
+
+	exports.array = toposort
+
+	function toposort(nodes, edges) {
+	  var cursor = nodes.length
+	    , sorted = new Array(cursor)
+	    , visited = {}
+	    , i = cursor
+
+	  while (i--) {
+	    if (!visited[i]) visit(nodes[i], i, [])
+	  }
+
+	  return sorted
+
+	  function visit(node, i, predecessors) {
+	    if(predecessors.indexOf(node) >= 0) {
+	      throw new Error('Cyclic dependency: '+JSON.stringify(node))
+	    }
+
+	    if (!~nodes.indexOf(node)) {
+	      throw new Error('Found unknown node. Make sure to provided all involved nodes. Unknown node: '+JSON.stringify(node))
+	    }
+
+	    if (visited[i]) return;
+	    visited[i] = true
+
+	    // outgoing edges
+	    var outgoing = edges.filter(function(edge){
+	      return edge[0] === node
+	    })
+	    if (i = outgoing.length) {
+	      var preds = predecessors.concat(node)
+	      do {
+	        var child = outgoing[--i][1]
+	        visit(child, nodes.indexOf(child), preds)
+	      } while (i)
+	    }
+
+	    sorted[--cursor] = node
+	  }
+	}
+
+	function uniqueNodes(arr){
+	  var res = []
+	  for (var i = 0, len = arr.length; i < len; i++) {
+	    var edge = arr[i]
+	    if (res.indexOf(edge[0]) < 0) res.push(edge[0])
+	    if (res.indexOf(edge[1]) < 0) res.push(edge[1])
+	  }
+	  return res
+	}
+
+
+/***/ },
+/* 12 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2751,24 +3125,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	var tagNotRegisteredException = exports.tagNotRegisteredException = function tagNotRegisteredException(name) {
 	  return new Error("Tag '" + name + "' not registered in flask.");
 	};
-	var paramAlreadyExistsException = exports.paramAlreadyExistsException = function paramAlreadyExistsException(alias) {
-	  return new Error("Parameter '" + alias + "' already exists in flask.");
-	};
-	var serviceAlreadyExistsException = exports.serviceAlreadyExistsException = function serviceAlreadyExistsException(alias) {
-	  return new Error("Service '" + alias + "' already exists in flask.");
-	};
-	var circularDependencyParameterError = exports.circularDependencyParameterError = function circularDependencyParameterError(alias) {
-	  return new Error("Circular dependency in parameter '" + alias + "'");
-	};
-	var circularDependencyServiceError = exports.circularDependencyServiceError = function circularDependencyServiceError(alias) {
-	  return new Error("Circular dependency in service '" + alias + "'");
-	};
-	var circularDependencyTagError = exports.circularDependencyTagError = function circularDependencyTagError(alias) {
-	  return new Error("Circular dependency in tag '" + alias + "'");
+	var circularDependencyException = exports.circularDependencyException = function circularDependencyException(dependencyChain) {
+	  return new Error("Circular dependency detected: " + dependencyChain);
 	};
 
 /***/ },
-/* 7 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2781,32 +3143,36 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _harmonyReflect = __webpack_require__(5);
+	var _harmonyReflect = __webpack_require__(6);
 
 	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
 
-	var _listeners = __webpack_require__(8);
+	var _EventDispatcher = __webpack_require__(14);
 
-	var _DecoratorResolver = __webpack_require__(9);
+	var _DecoratorResolver = __webpack_require__(16);
 
-	var _config = __webpack_require__(10);
+	var _config = __webpack_require__(17);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Configurator = function () {
-	  function Configurator(flask) {
+	  function Configurator(container) {
 	    _classCallCheck(this, Configurator);
 
-	    this.flask = flask;
+	    this.container = container;
 	  }
 
 	  _createClass(Configurator, [{
-	    key: 'configure',
-	    value: function configure(confObject) {
+	    key: 'instantiationConfiguration',
+	    value: function instantiationConfiguration(confObject) {
 	      this.registerDefaultConfiguration();
-
+	      this.merge(confObject);
+	    }
+	  }, {
+	    key: 'merge',
+	    value: function merge(confObject) {
 	      this.registerConfigValues(confObject);
 	      this.registerParameters(confObject);
 	      this.registerServices(confObject);
@@ -2816,9 +3182,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'registerDefaultConfiguration',
 	    value: function registerDefaultConfiguration() {
-	      this.flask.setConfigValue('serviceDelimiter', _config.SERVICE_DELIMITER_CHAR);
-	      this.flask.setConfigValue('paramDelimiter', _config.PARAMETER_DELIMITER_CHAR);
-	      this.flask.setConfigValue('tagDelimiter', _config.TAG_DELIMITER_CHAR);
+	      this.container.addConfigValue('serviceDelimiter', _config.SERVICE_DELIMITER_CHAR);
+	      this.container.addConfigValue('paramDelimiter', _config.PARAMETER_DELIMITER_CHAR);
+	      this.container.addConfigValue('tagDelimiter', _config.TAG_DELIMITER_CHAR);
 	    }
 	  }, {
 	    key: 'registerConfigValues',
@@ -2826,7 +3192,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var values = _harmonyReflect2.default.get(confObject, 'config') || {};
 
 	      for (var key in values) {
-	        this.flask.setConfigValue(key, values[key]);
+	        this.container.addConfigValue(key, values[key]);
 	      }
 	    }
 	  }, {
@@ -2840,9 +3206,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var tags = isObj ? _harmonyReflect2.default.get(parameters[param], 'tags') || [] : [];
 	        var decorators = isObj ? _harmonyReflect2.default.get(parameters[param], 'decorators') || [] : [];
 
-	        this.flask.parameter(param, value);
+	        this.container.addParameter(param, value);
 
-	        this.registerTags(param, tags);
+	        this.registerTags(param, tags, this.container.getConfigValue('paramDelimiter'));
 	        this.registerDecorators(param, decorators);
 	      }
 	    }
@@ -2859,21 +3225,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var listeners = _harmonyReflect2.default.get(services[alias], 'listeners') || {};
 	        var isSingleton = _harmonyReflect2.default.get(services[alias], 'singleton') || false;
 
-	        isSingleton === true ? this.flask.singleton(alias, service, args) : this.flask.service(alias, service, args);
+	        this.container.addService(alias, service, args, isSingleton);
 
-	        this.registerTags(alias, tags);
+	        this.registerTags(alias, tags, this.container.getConfigValue('serviceDelimiter'));
 	        this.registerListeners(alias, listeners);
 	        this.registerDecorators(alias, decorators);
 	      }
 	    }
 	  }, {
 	    key: 'registerTags',
-	    value: function registerTags(alias, tags) {
-	      if (!Array.isArray(tags)) {
-	        tags = [tags];
+	    value: function registerTags(alias, references, delimiter) {
+	      if (!Array.isArray(references)) {
+	        references = [references];
 	      }
-	      for (var tag in tags) {
-	        this.flask.tag(tags[tag], alias);
+	      for (var reference in references) {
+	        this.container.addTag(references[reference], '' + delimiter + alias + delimiter);
 	      }
 	    }
 	  }, {
@@ -2889,21 +3255,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        decorators = [decorators];
 	      }
 	      for (var decorator in decorators) {
-	        this.flask.decorate(alias, decorators[decorator]);
+	        this.container.addDecorator(alias, decorators[decorator]);
 	      }
 	    }
 	  }, {
 	    key: 'registerGlobalListeners',
 	    value: function registerGlobalListeners(confObject) {
 	      var listeners = _harmonyReflect2.default.get(confObject, 'listeners') || {};
-	      this.registerListeners(_listeners.GLOBAL_NAMESPACE, listeners);
+	      this.registerListeners(_EventDispatcher.GLOBAL_NAMESPACE, listeners);
 	    }
 	  }, {
 	    key: 'registerListeners',
 	    value: function registerListeners(alias, listeners) {
 	      for (var type in listeners) {
 	        for (var index in listeners[type]) {
-	          this.flask.listen(type, alias, listeners[type][index]);
+	          this.container.addListener(type, alias, listeners[type][index]);
 	        }
 	      }
 	    }
@@ -2915,7 +3281,112 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Configurator;
 
 /***/ },
-/* 8 */
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.GLOBAL_NAMESPACE = undefined;
+
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _harmonyReflect = __webpack_require__(6);
+
+	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
+
+	var _listeners = __webpack_require__(15);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var GLOBAL_NAMESPACE = exports.GLOBAL_NAMESPACE = '__global__';
+
+	var EventDispatcher = function () {
+	  function EventDispatcher(flask) {
+	    _classCallCheck(this, EventDispatcher);
+
+	    this.flask = flask;
+	    this.listeners = {};
+	  }
+
+	  _createClass(EventDispatcher, [{
+	    key: 'addListener',
+	    value: function addListener(event, alias, handler) {
+	      var _normalizeListener = this.normalizeListener(event, alias, handler);
+
+	      var _normalizeListener2 = _slicedToArray(_normalizeListener, 3);
+
+	      event = _normalizeListener2[0];
+	      alias = _normalizeListener2[1];
+	      handler = _normalizeListener2[2];
+
+
+	      this.getEventPlaceholder(event, alias).push(handler);
+
+	      return this;
+	    }
+	  }, {
+	    key: 'dispatch',
+	    value: function dispatch(event, alias, instance) {
+	      var _this = this;
+
+	      this.findGlobalEvent(event, GLOBAL_NAMESPACE).concat(this.findServiceEvent(event, alias)).map(function (listener) {
+	        listener(instance, _this.flask);
+	      });
+	    }
+	  }, {
+	    key: 'dispatchOnResolved',
+	    value: function dispatchOnResolved(alias, instance) {
+	      this.dispatch(_listeners.ON_RESOLVED, alias, instance);
+	    }
+	  }, {
+	    key: 'findServiceEvent',
+	    value: function findServiceEvent(event, alias) {
+	      if (_harmonyReflect2.default.has(this.listeners, event)) {
+	        return _harmonyReflect2.default.get(this.listeners[event], alias) || [];
+	      }
+	      return [];
+	    }
+	  }, {
+	    key: 'findGlobalEvent',
+	    value: function findGlobalEvent(event) {
+	      return this.findServiceEvent(event, GLOBAL_NAMESPACE);
+	    }
+	  }, {
+	    key: 'normalizeListener',
+	    value: function normalizeListener(event, alias, handler) {
+	      if (typeof alias === 'function') {
+	        handler = alias;
+	        alias = GLOBAL_NAMESPACE;
+	      }
+	      return [event, alias, handler];
+	    }
+	  }, {
+	    key: 'getEventPlaceholder',
+	    value: function getEventPlaceholder(event, alias) {
+	      if (!_harmonyReflect2.default.has(this.listeners, event)) {
+	        this.listeners[event] = {};
+	      }
+	      if (!Array.isArray(this.listeners[event][alias])) {
+	        this.listeners[event][alias] = [];
+	      }
+	      return this.listeners[event][alias];
+	    }
+	  }]);
+
+	  return EventDispatcher;
+	}();
+
+	exports.default = EventDispatcher;
+
+/***/ },
+/* 15 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2923,11 +3394,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var GLOBAL_NAMESPACE = exports.GLOBAL_NAMESPACE = '__global__';
 	var ON_RESOLVED = exports.ON_RESOLVED = 'resolved';
 
 /***/ },
-/* 9 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2939,7 +3409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _harmonyReflect = __webpack_require__(5);
+	var _harmonyReflect = __webpack_require__(6);
 
 	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
 
@@ -2988,7 +3458,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = DecoratorResolver;
 
 /***/ },
-/* 10 */
+/* 17 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2999,152 +3469,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var PARAMETER_DELIMITER_CHAR = exports.PARAMETER_DELIMITER_CHAR = '%';
 	var SERVICE_DELIMITER_CHAR = exports.SERVICE_DELIMITER_CHAR = '@';
 	var TAG_DELIMITER_CHAR = exports.TAG_DELIMITER_CHAR = '#';
-
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.Parameter = exports.Singleton = exports.Service = undefined;
-
-	var _Service = __webpack_require__(12);
-
-	var _Service2 = _interopRequireDefault(_Service);
-
-	var _Singleton = __webpack_require__(13);
-
-	var _Singleton2 = _interopRequireDefault(_Singleton);
-
-	var _Parameter = __webpack_require__(14);
-
-	var _Parameter2 = _interopRequireDefault(_Parameter);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	exports.Service = _Service2.default;
-	exports.Singleton = _Singleton2.default;
-	exports.Parameter = _Parameter2.default;
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _harmonyReflect = __webpack_require__(5);
-
-	var _harmonyReflect2 = _interopRequireDefault(_harmonyReflect);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Service = function () {
-	  function Service(alias, definition, args) {
-	    _classCallCheck(this, Service);
-
-	    this.alias = alias;
-	    this.definition = definition;
-	    this.args = args;
-	  }
-
-	  _createClass(Service, [{
-	    key: 'build',
-	    value: function build(dependencies) {
-	      return _harmonyReflect2.default.construct(this.definition, dependencies);
-	    }
-	  }]);
-
-	  return Service;
-	}();
-
-	exports.default = Service;
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-	var _Service2 = __webpack_require__(12);
-
-	var _Service3 = _interopRequireDefault(_Service2);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	var Singleton = function (_Service) {
-	  _inherits(Singleton, _Service);
-
-	  /* istanbul ignore next */
-	  function Singleton(alias, definition, args) {
-	    _classCallCheck(this, Singleton);
-
-	    var _this = _possibleConstructorReturn(this, (Singleton.__proto__ || Object.getPrototypeOf(Singleton)).call(this, alias, definition, args));
-
-	    _this.instance = null;
-	    return _this;
-	  }
-
-	  _createClass(Singleton, [{
-	    key: 'build',
-	    value: function build(dependencies) {
-	      if (this.instance !== null) {
-	        return this.instance;
-	      }
-	      /* istanbul ignore next */
-	      return this.instance = _get(Singleton.prototype.__proto__ || Object.getPrototypeOf(Singleton.prototype), 'build', this).call(this, dependencies);
-	    }
-	  }]);
-
-	  return Singleton;
-	}(_Service3.default);
-
-	exports.default = Singleton;
-
-/***/ },
-/* 14 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var Parameter = function Parameter(alias, value) {
-	  _classCallCheck(this, Parameter);
-
-	  this.alias = alias;
-	  this.value = value;
-	};
-
-	exports.default = Parameter;
 
 /***/ }
 /******/ ])
