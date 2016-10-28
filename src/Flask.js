@@ -36,7 +36,6 @@ export default class Flask {
     return this
   }
 
-  /* istanbul ignore next */
   listen(event, alias, handler) {
     console.warn('Method deprecated since 1.3.0 release. I\'t will be removed in 2.0 release. Use event named methods.')
     this.container.addListener(event, alias, handler)
@@ -48,7 +47,6 @@ export default class Flask {
     return this
   }
 
-  /* istanbul ignore next */
   cfg(key) {
     console.warn('Method deprecated since 1.3.0 release. I\'t will be removed in 2.0 release. Use \'.config()\' method instead.')
     return this.config(key)
@@ -76,5 +74,9 @@ export default class Flask {
 
   call(definition, args, context = null) {
     return this.wrap(definition, args, context)()
+  }
+
+  mock(alias) {
+    return this.container.setMock(alias)
   }
 }

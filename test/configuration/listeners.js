@@ -3,7 +3,7 @@ import { ON_RESOLVED } from '../../src/res/listeners'
 import { GLOBAL_NAMESPACE } from '../../src/core/EventDispatcher'
 
 describe('Listeners', () => {
-  it('Set global "onResolved" listener from instantiation', () => {
+  it('Add global "onResolved" listener from instantiation', () => {
     const func1 = () => {}
     const func2 = () => {}
     const config = {
@@ -18,7 +18,7 @@ describe('Listeners', () => {
     assert.deepEqual(flask.container.eventDispatcher.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1, func2])
   })
 
-  it('Set alias "onResolved" listener from instantiation', () => {
+  it('Add alias "onResolved" listener from instantiation', () => {
     class serviceA {}
     const func1 = () => {}
     const config = {
@@ -39,7 +39,7 @@ describe('Listeners', () => {
     assert.deepEqual(flask.container.eventDispatcher.listeners[ON_RESOLVED]['aliasA'], [func1])
   })
 
-  it('Set global "onResolved" listener manually', () => {
+  it('Add global "onResolved" listener manually', () => {
     const func1 = () => {}
     const func2 = () => {}
     const flask = new Flask()
@@ -51,7 +51,7 @@ describe('Listeners', () => {
     assert.deepEqual(flask.container.eventDispatcher.listeners[ON_RESOLVED][GLOBAL_NAMESPACE], [func1, func2])
   })
 
-  it('Set alias "onResolved" listener manually', () => {
+  it('Add alias "onResolved" listener manually', () => {
     class serviceA {}
     const func1 = () => {}
     const func2 = () => {}

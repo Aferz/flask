@@ -5,4 +5,5 @@ describe('Container configuration', () => {
   require('./tags')
   require('./decorators')
   require('./listeners')
+  require('./mocks')
 })

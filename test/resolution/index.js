@@ -5,4 +5,5 @@ describe('Container resolution', () => {
   require('./tags')
   require('./decorators')
   require('./listeners')
+  require('./mocks')
 })

@@ -2,7 +2,7 @@ import Flask from '../../src/Flask'
 import { GLOBAL_NAMESPACE } from '../../src/core/DecoratorResolver'
 
 describe('Decorators', () => {
-  it('Set global decorator from instantiation', () => {
+  it('Add global decorator from instantiation', () => {
     const func1 = () => {}
     const func2 = () => {}
     const config = {
@@ -14,7 +14,7 @@ describe('Decorators', () => {
     assert.deepEqual(flask.container.decoratorResolver.decorators[GLOBAL_NAMESPACE][1], func2)
   })
 
-  it('Set parameter decorator from instantiation', () => {
+  it('Add parameter decorator from instantiation', () => {
     const func1 = () => {}
     const config = {
       parameters: {
@@ -29,7 +29,7 @@ describe('Decorators', () => {
     assert.deepEqual(flask.container.decoratorResolver.decorators['param1'][0], func1)
   })
 
-  it('Set service decorator from instantiation', () => {
+  it('Add service decorator from instantiation', () => {
     const func1 = () => {}
     const Service = () => {}
     const config = {
@@ -45,7 +45,7 @@ describe('Decorators', () => {
     assert.deepEqual(flask.container.decoratorResolver.decorators['alias'][0], func1)
   })
 
-  it('Set service decorator as string converts it into an array from instantiation', () => {
+  it('Add service decorator as string converts it into an array from instantiation', () => {
     const func1 = () => {}
     const Service = () => {}
     const config = {
@@ -61,7 +61,7 @@ describe('Decorators', () => {
     assert.deepEqual(flask.container.decoratorResolver.decorators['alias'], [func1])
   })
 
-  it('Set global decorator manually', () => {
+  it('Add global decorator manually', () => {
     const func1 = () => {}
     const func2 = () => {}
     const flask = new Flask();
@@ -72,7 +72,7 @@ describe('Decorators', () => {
     assert.deepEqual(flask.container.decoratorResolver.decorators[GLOBAL_NAMESPACE][1], func2)
   })
 
-  it('Set service/parameter decorator manually', () => {
+  it('Add service/parameter decorator manually', () => {
     const func1 = () => {}
     const func2 = () => {}
     const flask = new Flask();
@@ -83,7 +83,7 @@ describe('Decorators', () => {
     assert.deepEqual(flask.container.decoratorResolver.decorators['serviceB'][0], func2)
   })
 
-  it('Set decorator twice just concat functions', () => {
+  it('Add decorator twice just concat functions', () => {
     const func1 = () => {}
     const func2 = () => {}
     const flask = new Flask();

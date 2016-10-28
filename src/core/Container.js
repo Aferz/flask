@@ -4,6 +4,7 @@ import Singleton from './resolvables/Singleton'
 import Parameter from './resolvables/Parameter'
 import Reference from './resolvables/Reference'
 
+import Mockery from './Mockery'
 import Resolver from './Resolver'
 import Configurator from './Configurator'
 import EventDispatcher from './EventDispatcher'
@@ -23,6 +24,7 @@ export default class Container {
     this.services = []
     this.parameters = []
 
+    this.mockery = new Mockery(this)
     this.resolver = new Resolver(this)
     this.configResolver = new Configurator(this)
     this.eventDispatcher = new EventDispatcher(flask)
@@ -71,6 +73,10 @@ export default class Container {
     this.eventDispatcher.addListener(event, alias, handler)
   }
 
+  setMock(alias) {
+    return this.mockery.setMock(alias)
+  }
+
   getConfigValue(key) {
     return this.config[key] || null
   }
@@ -84,6 +90,11 @@ export default class Container {
   }
 
   makeService(alias) {
+    const mock = this.mockery.find(alias)
+    if (mock) {
+      return mock
+    }
+
     const service = this.findService(alias)
     if (!service) {
       throw serviceNotRegisteredException(alias)
